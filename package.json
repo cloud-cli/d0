@@ -25,6 +25,7 @@
     "@cloud-cli/prettier-config": "^1.0.0",
     "@cloud-cli/typescript-config": "^1.0.0",
     "@types/better-sqlite3": "^7.6.3",
-    "@types/node": "^20.3.3"
+    "@types/node": "^20.3.3",
+    "typescript": "^5.4.3"
   }
 }
