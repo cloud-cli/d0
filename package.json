@@ -1,5 +1,5 @@
 {
-  "name": "@cloud-cli/",
+  "name": "@cloud-cli/d0",
   "version": "0.0.0",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -7,19 +7,24 @@
   "scripts": {
     "build": "tsc",
     "test": "jest",
-    "tdd": "jest --watchAll"
+    "tdd": "jest --watchAll",
+    "start": "node dist/serve.js"
   },
   "prettier": "@cloud-cli/prettier-config",
   "repository": {
     "type": "git",
-    "url": "https://github.com/cloud-cli/.git"
+    "url": "https://github.com/cloud-cli/d0.git"
   },
   "publishConfig": {
     "access": "public"
   },
+  "dependencies": {
+    "better-sqlite3": "^8.2.0"
+  },
   "devDependencies": {
     "@cloud-cli/prettier-config": "^1.0.0",
-    "@cloud-cli/jest-config": "^1.0.0",
-    "@cloud-cli/typescript-config": "^1.0.0"
+    "@cloud-cli/typescript-config": "^1.0.0",
+    "@types/better-sqlite3": "^7.6.3",
+    "@types/node": "^20.3.3"
   }
 }
