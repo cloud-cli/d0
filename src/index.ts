@@ -51,7 +51,8 @@ async function onQuery({ db, request, response }: Q) {
 
   try {
     const { s, d } = JSON.parse(query);
-    const result = db.prepare(s).run(d);
+    const runner = db.prepare(s);
+    const result = d ? runner.run(d) : runner.run();
     response.end(JSON.stringify(result));
   } catch (error) {
     process.env.DEBUG && console.error(error);

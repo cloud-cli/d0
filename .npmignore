@@ -5,3 +5,4 @@ coverage/
 dist/*.spec.js
 dist/*.spec.d.ts
 src/
+db.sqlite*
