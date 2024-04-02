@@ -7,7 +7,7 @@
   "scripts": {
     "build": "tsc",
     "test": "echo true",
-    "start": "node dist/serve.js"
+    "start": "node ./dist/serve.js"
   },
   "prettier": "@cloud-cli/prettier-config",
   "repository": {
@@ -18,7 +18,7 @@
     "access": "public"
   },
   "dependencies": {
-    "better-sqlite3": "^8.2.0"
+    "better-sqlite3": "^9.4.3"
   },
   "devDependencies": {
     "@cloud-cli/prettier-config": "^1.0.0",

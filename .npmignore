@@ -4,3 +4,4 @@ coverage/
 .github/
 dist/*.spec.js
 dist/*.spec.d.ts
+src/
