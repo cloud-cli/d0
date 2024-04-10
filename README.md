@@ -12,6 +12,7 @@ Send a JSON with two properties: `s` for statement and `d` for data (optional)
 ```js
 // using fetch
 fetch('https://db.example.com/query', {
+  method: 'POST',
   body: JSON.stringify({
     s: 'SELECT * FROM user WHERE id = ?',
     d: [123]
