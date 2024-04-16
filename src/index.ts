@@ -2,6 +2,8 @@ import { createServer, IncomingMessage, ServerResponse } from 'node:http';
 import { readFile } from 'node:fs/promises';
 import SQLite, { Database } from 'better-sqlite3';
 
+const methods = ['all', 'run', 'get'];
+
 type Q = {
   db: Database;
   request: IncomingMessage;
@@ -50,9 +52,10 @@ async function onQuery({ db, request, response }: Q) {
   }
 
   try {
-    const { s, d } = JSON.parse(query);
+    const { s, d, m = 'run' } = JSON.parse(query);
     const runner = db.prepare(s);
-    const result = d ? runner.run(d) : runner.run();
+    const method = methods.includes(m) ? m : 'run';
+    const result = d ? runner[method](d) : runner[method]();
     response.end(JSON.stringify(result));
   } catch (error) {
     process.env.DEBUG && console.error(error);
