@@ -19,8 +19,7 @@ export function getDatabase(): Database {
 
 export function serve() {
   const db = getDatabase();
-
-  const server = createServer(handleRequest);
+  const server = createServer((req, res) => handleRequest(req, res, db);
 
   server.listen(process.env.PORT);
 
