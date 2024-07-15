@@ -20,30 +20,32 @@ export function getDatabase(): Database {
 export function serve() {
   const db = getDatabase();
 
-  const server = createServer((request, response) => {
-    const url = new URL(request.url, 'http://localhost');
-    const route = `${request.method} ${url.pathname}`.trim();
-    const args = Object.fromEntries(url.searchParams.entries()) as Q['args'];
-    const q: Q = { db, request, response, args };
-
-    switch (route) {
-      case 'GET /index.mjs':
-        return onEsModule(q);
-
-      case 'POST /query':
-        return onQuery(q);
-
-      default:
-        response.writeHead(404).end();
-    }
-  });
+  const server = createServer(handleRequest);
 
   server.listen(process.env.PORT);
 
   return server;
 }
 
-async function onQuery({ db, request, response }: Q) {
+export function handleRequest(request, response, db) {
+  const url = new URL(request.url, 'http://localhost');
+  const route = `${request.method} ${url.pathname}`.trim();
+  const args = Object.fromEntries(url.searchParams.entries()) as Q['args'];
+  const q: Q = { db, request, response, args };
+
+  switch (route) {
+    case 'GET /index.mjs':
+      return onEsModule(q);
+
+    case 'POST /query':
+      return onQuery(q);
+
+    default:
+      response.writeHead(404).end();
+  }
+}
+
+export async function onQuery({ db, request, response }: Q) {
   const query = await readStream(request);
 
   if (!query.length) {
