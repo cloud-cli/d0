@@ -19,7 +19,7 @@ export function getDatabase(): Database {
 
 export function serve() {
   const db = getDatabase();
-  const server = createServer((req, res) => handleRequest(req, res, db);
+  const server = createServer((req, res) => handleRequest(req, res, db));
 
   server.listen(process.env.PORT);
 
@@ -45,7 +45,7 @@ export function handleRequest(request, response, db) {
 }
 
 export async function onQuery({ db, request, response }: Q) {
-  const query = await readStream(request);
+  const query = Buffer.concat(await request.toArray());
 
   if (!query.length) {
     response.writeHead(400).end();
@@ -53,10 +53,17 @@ export async function onQuery({ db, request, response }: Q) {
   }
 
   try {
-    const { s, d, m = 'run' } = JSON.parse(query);
+    const { s = '', d, m = 'run' } = JSON.parse(query.toString('utf-8'));
+    if (!s.trim()) {
+      throw new Error('Invalid statement.');
+    }
+
+    if (!methods.includes(m)) {
+      throw new Error('Invalid method. Must be one of ' + methods.join(', '));
+    }
+
     const runner = db.prepare(s);
-    const method = methods.includes(m) ? m : 'run';
-    const result = d ? runner[method](d) : runner[method]();
+    const result = d ? runner[m](d) : runner[m]();
     response.end(JSON.stringify(result));
   } catch (error) {
     process.env.DEBUG && console.error(error);
