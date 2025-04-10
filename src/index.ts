@@ -91,12 +91,3 @@ async function onEsModule({ request, response }: Q) {
     })
     .end(code.replace('__API_URL__', hostname));
 }
-
-function readStream(stream): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const all = [];
-    stream.on('data', (c) => all.push(c));
-    stream.on('end', () => resolve(Buffer.concat(all).toString('utf8')));
-    stream.on('error', reject);
-  });
-}
