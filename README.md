@@ -9,9 +9,11 @@ SQLite server over HTTP
 Run a prepared SQLite statement.
 Accepts a JSON with these properties:
 
-- `s`: string with the statement
-- `d`: data to bind on a statement (optional)
-- `m`: method to execute all, run or get. Run is the default (optional)
+| Property | Description | Required |
+|-|:-:|-|
+|`s` | string with the statement | **yes** |
+|`d` | data to bind on a statement | no |
+|`m` | method to execute: `all`, `run` or `get`. Run is the default | no |
 
 ```js
 // select all items using fetch
