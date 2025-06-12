@@ -18,7 +18,8 @@
     "access": "public"
   },
   "dependencies": {
-    "better-sqlite3": "^11.0.0"
+    "better-sqlite3": "^11.0.0",
+    "@cloud-cli/http": "^1.0.0"
   },
   "devDependencies": {
     "@cloud-cli/prettier-config": "^1.0.0",

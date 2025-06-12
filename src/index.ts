@@ -1,51 +1,54 @@
-import { createServer, IncomingMessage, ServerResponse } from "node:http";
+import { IncomingMessage, ServerResponse } from "node:http";
 import { readFile } from "node:fs/promises";
 import SQLite, { Database } from "better-sqlite3";
 import { join } from "node:path";
+import createServer from "@cloud-cli/http";
 
 const methods = ["all", "run", "get"];
 const baseDomain = process.env.BASE_DOMAIN;
 const dataPath = process.env.DATA_PATH || join(import.meta.dirname, "data");
 
-type Q = {
-  db: Database;
+type Query = {
+  db: string;
   request: IncomingMessage;
   response: ServerResponse;
   args: Record<string, string>;
 };
 
-export function getDatabase(file: string = "db.sqlite3"): Database {
+export function getDatabase(file: string): Database {
   const fullPath = join(dataPath, file);
   const db = new SQLite(fullPath);
   db.pragma("journal_mode = WAL");
+
   return db;
 }
 
 export function serve() {
-  const db = getDatabase();
-  const server = createServer((req, res) => {
-    if (baseDomain) {
+  if (baseDomain) {
+    return createServer((req, res) => {
       const hostname = String(req.headers["x-forwarded-for"] || "");
       const subdomain = hostname.replace(baseDomain, "").replace(".", "");
 
       if (subdomain) {
-        return handleRequest(req, res, getDatabase(subdomain + ".sqlite3"));
+        return handleRequest(req, res, subdomain + ".sqlite3");
       }
-    }
 
-    handleRequest(req, res, db);
-  });
+      res.writeHead(400).end();
+    });
+  }
 
-  server.listen(process.env.PORT);
-
-  return server;
+  return createServer((req, res) => handleRequest(req, res, "db.sqlite3"));
 }
 
-export function handleRequest(request, response, db) {
+export function handleRequest(
+  request: IncomingMessage,
+  response: ServerResponse,
+  db: string
+) {
   const url = new URL(request.url, "http://localhost");
   const route = `${request.method} ${url.pathname}`.trim();
-  const args = Object.fromEntries(url.searchParams.entries()) as Q["args"];
-  const q: Q = { db, request, response, args };
+  const args = Object.fromEntries(url.searchParams.entries()) as Query["args"];
+  const q: Query = { db, request, response, args };
 
   switch (route) {
     case "GET /index.mjs":
@@ -59,7 +62,7 @@ export function handleRequest(request, response, db) {
   }
 }
 
-export async function onQuery({ db, request, response }: Q) {
+export async function onQuery({ db, request, response }: Query) {
   const query = Buffer.concat(await request.toArray());
 
   if (!query.length) {
@@ -69,6 +72,7 @@ export async function onQuery({ db, request, response }: Q) {
 
   try {
     const { s = "", d, m = "run" } = JSON.parse(query.toString("utf-8"));
+
     if (!s.trim()) {
       throw new Error("Invalid statement.");
     }
@@ -77,7 +81,8 @@ export async function onQuery({ db, request, response }: Q) {
       throw new Error("Invalid method. Must be one of " + methods.join(", "));
     }
 
-    const runner = db.prepare(s);
+    const sqlite = getDatabase(db);
+    const runner = sqlite.prepare(s.trim());
     const result = d ? runner[m](d) : runner[m]();
     response.end(JSON.stringify(result));
   } catch (error) {
@@ -86,7 +91,7 @@ export async function onQuery({ db, request, response }: Q) {
   }
 }
 
-let file;
+let file: string;
 async function getFile() {
   if (!file) {
     file = await readFile("./client.mjs", "utf8");
@@ -95,8 +100,8 @@ async function getFile() {
   return file;
 }
 
-async function onEsModule({ request, response }: Q) {
-  const hostname = request.headers["x-forwarded-for"];
+async function onEsModule({ request, response }: Query) {
+  const hostname = String(request.headers["x-forwarded-for"]);
   const code = await getFile();
 
   response
