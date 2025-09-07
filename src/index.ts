@@ -84,7 +84,7 @@ export async function onQuery({ db, request, response }: Query) {
     const sqlite = getDatabase(db);
     const runner = sqlite.prepare(s.trim());
     const result = d ? runner[m](d) : runner[m]();
-    response.end(JSON.stringify(result));
+    response.end(JSON.stringify(result || null));
   } catch (error) {
     process.env.DEBUG && console.error(error);
     response.writeHead(400).end(String(error));
