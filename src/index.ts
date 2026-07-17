@@ -26,7 +26,7 @@ export function getDatabase(file: string): Database {
 export function serve() {
   if (baseDomain) {
     return createServer((req, res) => {
-      const hostname = String(req.headers["x-forwarded-for"] || "");
+      const hostname = String(req.headers["x-forwarded-host"] || "");
       const subdomain = hostname.replace(baseDomain, "").replace(".", "");
 
       if (subdomain) {
@@ -40,10 +40,10 @@ export function serve() {
   return createServer((req, res) => handleRequest(req, res, "db.sqlite3"));
 }
 
-export function handleRequest(
+export async function handleRequest(
   request: IncomingMessage,
   response: ServerResponse,
-  db: string
+  db: string,
 ) {
   const url = new URL(request.url, "http://localhost");
   const route = `${request.method} ${url.pathname}`.trim();
@@ -51,6 +51,11 @@ export function handleRequest(
   const q: Query = { db, request, response, args };
 
   switch (route) {
+    case "GET /console.html":
+      const indexPage = await readFile("./index.html", "utf8");
+      response.writeHead(200, { "content-type": "text/html" }).end(indexPage);
+      return;
+
     case "GET /index.mjs":
       return onEsModule(q);
 

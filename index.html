@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link
+      rel="component"
+      href="https://sodium.static.apphor.de/code-editor.html"
+    />
+    <link
+      rel="component"
+      href="https://sodium.static.apphor.de/code-block.html"
+    />
+    <title></title>
+    <script type="importmap">
+      {
+        "imports": {
+          "@li3/": "https://at-li3.static.apphor.de/",
+          "@sodium/": "https://at-sodium.static.apphor.de/",
+          "@app/": "./"
+        }
+      }
+    </script>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css"
+    />
+  </head>
+  <body
+    class="bg-gray-900 text-white font-sans h-screen flex flex-col overflow-hidden"
+  >
+    <app-main class="contents"></app-main>
+
+    <script type="module">
+      import "@li3/web";
+    </script>
+
+    <template component="app-main">
+      <div
+        class="flex flex-col items-stretch justify-between space-y-2 p-4 h-full"
+      >
+        <div class="p-2 overflow-auto font-mono text-xs h-full">
+          <template for="r of responses">
+            <code-block
+              bind-source="r || ''"
+              language="json"
+              class="py-1 border-b"
+            ></code-block>
+          </template>
+          <div class="text-red-400 text-sm">{{ error || '' }}</div>
+        </div>
+        <div class="flex-1">
+          <input
+            bind-value="name"
+            placeholder="Name"
+            class="block w-full p-2 rounded-md bg-gray-300 border text-black text-xs font-mono"
+            on-change="setName($event.target.value)"
+          />
+        </div>
+        <div class="flex-1">
+          <form on-submit.prevent="onRun()">
+            <code-editor
+              nolines="1"
+              nostatus="1"
+              language="sql"
+              bind-value="query"
+              on-change="setQuery($event.target.value)"
+              class="font-mono text-xs border rounded-md w-full block h-32"
+            ></code-editor>
+            <div class="flex items-center justify-end mt-2">
+              <button
+                type="submit"
+                bind-disabled="!name || !query"
+                class="bg-gray-400 text-black px-4 py-2 rounded focus:bg-white hover:bg-white"
+              >
+                Run
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+      <script setup>
+        import { hook } from "@li3/web";
+
+        export default function () {
+          const [name, setName] = hook("");
+          const [query, setQuery] = hook("");
+          const [responses] = hook("");
+          const [error, setError] = hook("");
+
+          function append(r) {
+            responses.value = [...responses.value, r];
+          }
+
+          async function onRun() {
+            if (!name.value) return;
+
+            try {
+              setError("");
+
+              const db = await import(`https://${name}.db.apphor.de/index.mjs`);
+              const q = query.value;
+              const s = await (q.toLowerCase().includes("select")
+                ? db.all(q)
+                : db.run(q));
+
+              append(JSON.stringify(s, null, 2));
+            } catch (e) {
+              setError(e);
+            }
+          }
+
+          return { name, query, responses, setName, setQuery, error, onRun };
+        }
+      </script>
+    </template>
+  </body>
+</html>
