@@ -1,8 +1,9 @@
-FROM ghcr.io/cloud-cli/node:latest as builder
+FROM ghcr.io/cloud-cli/node:latest AS builder
 
 USER root
 WORKDIR /home/app
 COPY . /home/app
+ENV CI=true
 RUN pnpm i && pnpm build && rm -rf node_modules/ src/ && pnpm store prune
 
 FROM ghcr.io/cloud-cli/node:latest

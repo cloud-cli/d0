@@ -1,12 +1,15 @@
 const baseURL = "https://__API_URL__";
 
-export async function query(statement, data, method = "run") {
+let pragmas = [];
+
+async function query(method, statement, data, pragma = pragmas) {
   const req = await fetch(new URL("/query", baseURL), {
     method: "POST",
     body: JSON.stringify({
       s: statement,
-      d: data || null,
+      d: data,
       m: method,
+      p: pragma
     }),
   });
 
@@ -17,16 +20,14 @@ export async function query(statement, data, method = "run") {
   throw new Error(await req.text());
 }
 
-export function get(statement, data) {
-  return query(statement, data, "get");
+export const get = query.bind(null, 'get');
+export const run = query.bind(null, 'run');
+export const all = query.bind(null, 'all');
+
+export function pragma(p) {
+  if (Array.isArray(p) && p.every(s => typeof s === 'string')) {
+    pragmas = p;
+  }
 }
 
-export function run(statement, data) {
-  return query(statement, data, "run");
-}
-
-export function all(statement, data) {
-  return query(statement, data, "all");
-}
-
-export default { query, get, run, all };
+export default { query, get, run, all, pragma };

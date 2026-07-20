@@ -14,6 +14,7 @@ Accepts a JSON with these properties:
 |`s` | string with the statement | **yes** |
 |`d` | data to bind on a statement | no |
 |`m` | method to execute: `all`, `run` or `get`. Run is the default | no |
+|`p` | pragma statements as an array of strings. They run before the query | no |
 
 ```js
 // select all items using fetch
@@ -23,6 +24,7 @@ fetch('https://db.example.com/query', {
     s: 'SELECT * FROM user WHERE id = ?',
     d: [123],
     m: 'all',
+    p: ['foreign_keys = ON']
   });
 });
 
