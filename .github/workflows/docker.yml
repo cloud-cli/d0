@@ -8,4 +8,4 @@ jobs:
     uses: cloud-cli/workflows/.github/workflows/docker-ghcr-build.yml@main
     with:
       name: cloud-cli/d0
-      buildCommand: "pnpm i && pnpm build"
+      buildCommand: "npm i -g pnpm@10 && pnpm i && pnpm build"
