@@ -52,8 +52,8 @@ export async function handleRequest(
 
   switch (route) {
     case "GET /console.html":
-      const indexPage = await readFile("./index.html", "utf8");
-      response.writeHead(200, { "content-type": "text/html" }).end(indexPage);
+      const consolePage = await readFile("./console.html", "utf8");
+      response.writeHead(200, { "content-type": "text/html" }).end(consolePage);
       return;
 
     case "GET /index.mjs":
@@ -96,18 +96,9 @@ export async function onQuery({ db, request, response }: Query) {
   }
 }
 
-let file: string;
-async function getFile() {
-  if (!file) {
-    file = await readFile("./client.mjs", "utf8");
-  }
-
-  return file;
-}
-
 async function onEsModule({ request, response }: Query) {
   const hostname = String(request.headers["x-forwarded-for"]);
-  const code = await getFile();
+  const code = await readFile("./client.mjs", "utf8")
 
   response
     .writeHead(200, {
