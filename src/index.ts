@@ -94,7 +94,7 @@ export async function onQuery(request: IncomingMessage, response: ServerResponse
 }
 
 async function onEsModule(request: IncomingMessage, response: ServerResponse) {
-  const hostname = String(request.headers['x-forwarded-for']);
+  const hostname = String(request.headers['x-forwarded-host']);
   const code = await readFile('./client.mjs', 'utf8');
 
   response
