@@ -44,7 +44,7 @@
             <code-block
               bind-source="r || ''"
               language="json"
-              class="py-1 border-b"
+              class="py-1 border-b block w-full"
             ></code-block>
           </template>
           <div class="text-red-400 text-sm">{{ error || '' }}</div>
@@ -65,6 +65,7 @@
               language="sql"
               bind-value="query"
               on-change="setQuery($event.target.value)"
+              on-keyup="onKeyUp($event)"
               class="font-mono text-xs border rounded-md w-full block h-32"
             ></code-editor>
             <div class="flex items-center justify-end mt-2">
@@ -83,13 +84,21 @@
         import { hook } from "@li3/web";
 
         export default function () {
-          const [name, setName] = hook("");
+          const url = new URL(location.href);
+          const [name, setName] = hook(url.hostname.replace('.db.apphor.de', '');
           const [query, setQuery] = hook("");
           const [responses] = hook("");
           const [error, setError] = hook("");
 
           function append(r) {
             responses.value = [...responses.value, r];
+          }
+
+          function onKeyUp(event) {
+            if (event.metaKey && event.key === 'Enter') {
+              event.preventDefault();
+              onRun();
+            }
           }
 
           async function onRun() {
@@ -99,8 +108,13 @@
               setError("");
 
               const db = await import(`https://${name}.db.apphor.de/index.mjs`);
-              const q = query.value;
-              const s = await (q.toLowerCase().includes("select")
+              let q = query.value.trim();
+              
+              if (!q.endsWith(';')) {
+                q += ';';
+              }
+              
+              const s = await (q.toLowerCase().includes("select ")
                 ? db.all(q)
                 : db.run(q));
 
