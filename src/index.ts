@@ -4,7 +4,7 @@ import SQLite, { Database } from 'better-sqlite3';
 import { join } from 'node:path';
 
 const DEBUG = !!process.env.DEBUG;
-const methods = ['all', 'run', 'get'];
+const methods = ['all', 'run', 'get', 'exec'];
 const baseDomain = process.env.BASE_DOMAIN;
 const dataPath = process.env.DATA_PATH || join(import.meta.dirname, 'data');
 
