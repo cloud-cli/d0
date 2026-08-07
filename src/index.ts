@@ -1,9 +1,9 @@
-import { IncomingMessage, ServerResponse } from 'node:http';
+import { createServer, IncomingMessage, ServerResponse } from 'node:http';
 import { readFile } from 'node:fs/promises';
 import SQLite, { Database } from 'better-sqlite3';
 import { join } from 'node:path';
-import createServer from '@cloud-cli/http';
 
+const DEBUG = !!process.env.DEBUG;
 const methods = ['all', 'run', 'get'];
 const baseDomain = process.env.BASE_DOMAIN;
 const dataPath = process.env.DATA_PATH || join(import.meta.dirname, 'data');
@@ -17,9 +17,11 @@ export function getDatabase(file: string): Database {
 }
 
 export function serve() {
+  let server;
+  
   if (baseDomain) {
-    return createServer((req, res) => {
-      const hostname = String(req.headers['x-forwarded-for'] || '');
+    server = createServer((req, res) => {
+      const hostname = String(req.headers['x-forwarded-host'] || '');
       const subdomain = hostname
         .replace(baseDomain, '')
         .replace('.', '')
@@ -31,12 +33,22 @@ export function serve() {
 
       res.writeHead(400).end();
     });
+  } else  {
+    server = createServer((req, res) => handleRequest(req, res, 'db.sqlite3'));
   }
 
-  return createServer((req, res) => handleRequest(req, res, 'db.sqlite3'));
+  server.listen(+process.env.PORT, () => {
+    console.log(`Started on ${process.env.PORT}`);
+  });
+
+  return server;
 }
 
 export async function handleRequest(request: IncomingMessage, response: ServerResponse, db: string) {
+  response.on('finish', () => {
+    console.log(`[${new Date().toISOString().slice(0, 19)}] [${response.statusCode} ${String(request.headers['x-forwarded-host'] || '')}] ${request.method} ${request.url}`); 
+  });
+
   const url = new URL(request.url, 'http://localhost');
   const route = `${request.method} ${url.pathname}`.trim();
 
@@ -87,8 +99,9 @@ export async function onQuery(request: IncomingMessage, response: ServerResponse
     const runner = sqlite.prepare(s.trim());
     const result = d ? runner[m](d) : runner[m]();
     response.end(JSON.stringify(result || null));
+    DEBUG && console.log(s.trim(), d, result);
   } catch (error) {
-    process.env.DEBUG && console.error(error);
+    DEBUG && console.error(error);
     response.writeHead(400).end(String(error));
   }
 }
