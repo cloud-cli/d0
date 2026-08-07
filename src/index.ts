@@ -18,7 +18,7 @@ export function getDatabase(file: string): Database {
 
 export function serve() {
   let server;
-  
+
   if (baseDomain) {
     server = createServer((req, res) => {
       const hostname = String(req.headers['x-forwarded-host'] || '');
@@ -33,7 +33,7 @@ export function serve() {
 
       res.writeHead(400).end();
     });
-  } else  {
+  } else {
     server = createServer((req, res) => handleRequest(req, res, 'db.sqlite3'));
   }
 
@@ -45,9 +45,12 @@ export function serve() {
 }
 
 export async function handleRequest(request: IncomingMessage, response: ServerResponse, db: string) {
-  DEBUG && response.on('finish', () => {
-    console.log(`[${new Date().toISOString().slice(0, 19)}] [${response.statusCode} ${String(request.headers['x-forwarded-host'] || '')}] ${request.method} ${request.url}`); 
-  });
+  DEBUG &&
+    response.on('finish', () => {
+      console.log(
+        `[${new Date().toISOString().slice(0, 19)}] [${response.statusCode} ${String(request.headers['x-forwarded-host'] || '')}] ${request.method} ${request.url}`,
+      );
+    });
 
   const url = new URL(request.url, 'http://localhost');
   const route = `${request.method} ${url.pathname}`.trim();
@@ -90,14 +93,21 @@ export async function onQuery(request: IncomingMessage, response: ServerResponse
 
     const sqlite = getDatabase(db);
 
-    if (p && Array.isArray(p) && p.every(s => typeof s === 'string')) {
+    if (p && Array.isArray(p) && p.every((s) => typeof s === 'string')) {
       for (const s of p) {
         sqlite.pragma(s);
       }
     }
 
-    const runner = sqlite.prepare(s.trim());
-    const result = d ? runner[m](d) : runner[m]();
+    let result;
+
+    if (m === 'exec') {
+      result = sqlite.exec(s.trim());
+    } else {
+      const runner = sqlite.prepare(s.trim());
+      result = d ? runner[m](d) : runner[m]();
+    }
+
     response.end(JSON.stringify(result || null));
     DEBUG && console.log(s.trim(), d, result);
   } catch (error) {
