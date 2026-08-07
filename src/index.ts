@@ -45,7 +45,7 @@ export function serve() {
 }
 
 export async function handleRequest(request: IncomingMessage, response: ServerResponse, db: string) {
-  response.on('finish', () => {
+  DEBUG && response.on('finish', () => {
     console.log(`[${new Date().toISOString().slice(0, 19)}] [${response.statusCode} ${String(request.headers['x-forwarded-host'] || '')}] ${request.method} ${request.url}`); 
   });
 
