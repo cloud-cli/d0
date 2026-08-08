@@ -65,6 +65,15 @@
               >
                 Run
               </button>
+
+              <button
+                type="button"
+                on-click="onUpdateGraph()"
+                bind-disabled="!name"
+                class="bg-gray-400 text-black px-4 py-2 rounded focus:bg-white hover:bg-white"
+              >
+                Graph
+              </button>
             </div>
           </form>
         </div>
@@ -116,12 +125,15 @@
             }
           }
 
-          onInit(async () => {
+          async function onUpdateGraph() {
+            if (!name.value) return;
             const schema = await runQuery('select * from sqlite_schema;');
             setDiagram(schemaToMermaid(schema));
-          });
+          }
 
-          return { name, diagram, query, responses, setName, setQuery, error, onRun, onKeyUp };
+          onInit(onUpdateGraph);
+
+          return { name, diagram, query, responses, setName, setQuery, error, onRun, onKeyUp, onUpdateGraph };
         }
 
         function schemaToMermaid(schema) {
