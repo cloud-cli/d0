@@ -1,16 +1,11 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link
-      rel="component"
-      href="https://sodium.static.apphor.de/code-editor.html"
-    />
-    <link
-      rel="component"
-      href="https://sodium.static.apphor.de/code-block.html"
-    />
+    <link rel="component" href="https://sodium.static.apphor.de/code-editor.html" />
+    <link rel="component" href="https://sodium.static.apphor.de/code-block.html" />
+    <link rel="component" href="https://sodium.static.apphor.de/mermaid-graph.html" />
     <title></title>
     <script type="importmap">
       {
@@ -21,30 +16,24 @@
         }
       }
     </script>
-    <link
-      rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css"
-    />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" />
   </head>
-  <body
-    class="bg-gray-900 text-white font-sans h-screen flex flex-col overflow-hidden"
-  >
+  <body class="bg-gray-900 text-white font-sans h-screen flex flex-col overflow-hidden">
     <app-main class="contents"></app-main>
 
     <script type="module">
-      import "@li3/web";
+      import '@li3/web';
     </script>
 
     <template component="app-main">
-      <div
-        class="flex flex-col items-stretch justify-between space-y-2 p-4 h-full"
-      >
+      <div class="flex flex-col items-stretch justify-between space-y-2 p-4 h-full">
         <div class="p-2 overflow-auto font-mono text-xs h-full">
           <template for="r of responses">
             <code-block
               bind-source="r || ''"
               language="json"
-              class="py-1 border-b block w-full"
+              class="py-1 border-b block w-full whitespace-pre-wrap overflow-auto"
+              style="max-height: 10rem"
             ></code-block>
           </template>
           <div class="text-red-400 text-sm">{{ error || '' }}</div>
@@ -79,16 +68,19 @@
             </div>
           </form>
         </div>
+        <mermaid-graph class="flex-1 h-64 overflow-auto" bind-input="diagram"></mermaid-graph>
       </div>
+
       <script setup>
-        import { hook } from "@li3/web";
+        import { hook, onInit } from '@li3/web';
 
         export default function () {
+          const [diagram, setDiagram] = hook(null);
           const url = new URL(location.href);
           const [name, setName] = hook(url.hostname.replace('.db.apphor.de', ''));
-          const [query, setQuery] = hook("");
-          const [responses] = hook("");
-          const [error, setError] = hook("");
+          const [query, setQuery] = hook('');
+          const [responses] = hook('');
+          const [error, setError] = hook('');
 
           function append(r) {
             responses.value = [...responses.value, r];
@@ -101,30 +93,84 @@
             }
           }
 
+          async function runQuery(q) {
+            const db = await import(`https://${name}.db.apphor.de/index.mjs`);
+            if (!q.endsWith(';')) {
+              q += ';';
+            }
+
+            const s = await (q.toLowerCase().includes('select ') ? db.all(q) : db.run(q));
+            return s;
+          }
+
           async function onRun() {
             if (!name.value) return;
 
             try {
-              setError("");
-
-              const db = await import(`https://${name}.db.apphor.de/index.mjs`);
-              let q = query.value.trim();
-              
-              if (!q.endsWith(';')) {
-                q += ';';
-              }
-              
-              const s = await (q.toLowerCase().includes("select ")
-                ? db.all(q)
-                : db.run(q));
-
+              setError('');
+              const q = query.value.trim();
+              const s = await runQuery(q);
               append(JSON.stringify(s, null, 2));
             } catch (e) {
               setError(e);
             }
           }
 
-          return { name, query, responses, setName, setQuery, error, onRun, onKeyUp };
+          onInit(async () => {
+            const schema = await runQuery('select * from sqlite_schema;');
+            setDiagram(schemaToMermaid(schema));
+          });
+
+          return { name, diagram, query, responses, setName, setQuery, error, onRun, onKeyUp };
+        }
+
+        function schemaToMermaid(schema) {
+          let diagram = 'erDiagram\n';
+
+          for (const row of schema) {
+            // 1. Ignore indexes, views, and system tables
+            if (row.type !== 'table' || row.name.startsWith('sqlite_') || !row.sql) continue;
+
+            const tableName = row.name;
+            const sql = row.sql;
+
+            // 2. Extract relationships (matches both inline 'REFERENCES tbl' and 'FOREIGN KEY (...) REFERENCES tbl')
+            const fkRegex = /REFERENCES\s+([^\s(;]+)/gi;
+            let match;
+            const referencedTables = new Set();
+
+            while ((match = fkRegex.exec(sql)) !== null) {
+              // Clean up target table name (strip quotes/brackets)
+              const parentTable = match[1].replace(/[`"'[\]]/g, '').split('(')[0];
+              referencedTables.add(parentTable);
+            }
+
+            referencedTables.forEach((parentTable) => {
+              diagram += `    ${parentTable} ||--o{ ${tableName} : "references"\n`;
+            });
+
+            // 3. Extract columns
+            diagram += `    ${tableName} {\n`;
+            const bodyMatch = sql.match(/\(([\s\S]+)\)/);
+
+            if (bodyMatch) {
+              const definitions = bodyMatch[1].split(/,\s*(?![^()]*\))/);
+              definitions.forEach((def) => {
+                const parts = def.trim().split(/\s+/);
+                const keyword = parts[0] ? parts[0].toUpperCase() : '';
+
+                // Skip table-level constraints
+                if (parts[0] && !['CONSTRAINT', 'PRIMARY', 'FOREIGN', 'UNIQUE', 'CHECK'].includes(keyword)) {
+                  const colName = parts[0].replace(/[`"'[\]]/g, '');
+                  const colType = parts[1] ? parts[1].replace(/,/g, '') : 'TEXT';
+                  diagram += `        ${colType} ${colName}\n`;
+                }
+              });
+            }
+            diagram += `    }\n`;
+          }
+
+          return diagram;
         }
       </script>
     </template>
