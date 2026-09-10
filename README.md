@@ -68,3 +68,7 @@ Otherwise, it will be available at `http://localhost:PORT/` and serve a single d
 | MAX_DATABASES  | Maximum number of database connections kept open (default: `32`) |
 | MAX_BODY_BYTES | Maximum JSON request size (default: `1048576`)                  |
 | SLOW_QUERY_MS  | Log slow queries in `DEBUG` mode (default: `1000`)             |
+
+## Development
+
+This project uses pnpm `12.3.4`. The workspace explicitly permits the `better-sqlite3` native install script; it must run during Docker builds so the platform-specific SQLite binding is present in the final image.
