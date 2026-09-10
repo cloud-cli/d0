@@ -248,7 +248,7 @@
           <section class="panel editor-panel">
             <div class="editor">
               <div class="panel-title">Query</div>
-              <code-editor nolines="1" language="sql" bind-value="query" on-change="setQuery($event.target.value)" on-keyup="onKeyUp($event)"></code-editor>
+              <code-editor nolines="1" nostatus="1" theme="a11y-dark" language="sql" bind-value="query" on-change="setQuery($event.target.value)" on-keyup="onKeyUp($event)"></code-editor>
               <div class="editor-actions">
                 <button class="run" type="button" on-click="runQuery()">Run query</button>
               </div>

@@ -11,4 +11,4 @@ FROM ghcr.io/cloud-cli/node:latest
 ENV NODE_ENV=production
 WORKDIR /home/app
 COPY --from=builder /home/app/ ./
-RUN pnpm install --prod
+RUN pnpm install --prod --frozen-lockfile && pnpm rebuild better-sqlite3
