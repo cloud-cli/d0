@@ -39,8 +39,8 @@ packages:
   '@cloud-cli/prettier-config@1.0.0':
     resolution: {integrity: sha512-0Ops1CBvaV4keDW+phGR2eOLmjBhXHV8eG5Cm3nAqlHUdWbYs9a73r39GVDzz/J5kni5iUhKJG/IPKwPinWpsA==}
 
-  '@cloud-cli/proxy@1.11.1':
-    resolution: {integrity: sha512-bEKtqrDI2NY/fYHf+WJO1qz3dcnMooiFfh3cbJpDJYba4fPDCl41MxAxHFh2meKv7500JxJ9JhYi5oOoN2mJJQ==}
+  '@cloud-cli/proxy@1.12.1':
+    resolution: {integrity: sha512-sXo2JNn3R0I5G3cLsE4ww6/w4v8HZlsiiGg3tMvqAnWPs33fxb0HHPexyObgTMhRK8sWDzXCvGyXcmU4jbWDWg==}
     hasBin: true
 
   '@cloud-cli/typescript-config@1.0.1':
@@ -121,8 +121,8 @@ packages:
   napi-build-utils@2.0.0:
     resolution: {integrity: sha512-GEbrYkbfF7MoNaoh2iGG84Mnf/WZfB0GdGEsM8wz7Expx/LlWf5U8t9nvJKXSp3qr5IsEbK04cBGhol/KwOsWA==}
 
-  node-abi@3.94.0:
-    resolution: {integrity: sha512-W5ZNO5KRPB5TkYmGVD9F6YqhsglXJzE6etpbmT+f6EQElhiX/UTG551cnsRGvLG3fyZEg9HwaDmNmj5nwJ4z9g==}
+  node-abi@3.96.0:
+    resolution: {integrity: sha512-rebQ/lz7i0EkoLzUVSrKRzA69zMkwLp95kKMWoMDkkM00Suxz0D7zEQPwRml5fQum24mj7bPvmlgLAmu2JCiYg==}
     engines: {node: '>=10'}
 
   once@1.4.0:
@@ -194,11 +194,11 @@ snapshots:
 
   '@cloud-cli/http@1.1.0':
     dependencies:
-      '@cloud-cli/proxy': 1.11.1
+      '@cloud-cli/proxy': 1.12.1
 
   '@cloud-cli/prettier-config@1.0.0': {}
 
-  '@cloud-cli/proxy@1.11.1': {}
+  '@cloud-cli/proxy@1.12.1': {}
 
   '@cloud-cli/typescript-config@1.0.1': {}
 
@@ -268,7 +268,7 @@ snapshots:
 
   napi-build-utils@2.0.0: {}
 
-  node-abi@3.94.0:
+  node-abi@3.96.0:
     dependencies:
       semver: 7.8.5
 
@@ -284,7 +284,7 @@ snapshots:
       minimist: 1.2.8
       mkdirp-classic: 0.5.3
       napi-build-utils: 2.0.0
-      node-abi: 3.94.0
+      node-abi: 3.96.0
       pump: 3.0.4
       rc: 1.2.8
       simple-get: 4.0.1
