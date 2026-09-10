@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-labelledby="title desc">
+  <title id="title">d0</title>
+  <desc id="desc">A simple stacked database mark with a zero-shaped center.</desc>
+  <rect width="256" height="256" rx="56" fill="#101316" />
+  <path fill="#8bd5ca" d="M48 72c0-24 36-40 80-40s80 16 80 40v112c0 24-36 40-80 40s-80-16-80-40V72Zm24 0v112c0 8 22 16 56 16s56-8 56-16V72c-16 10-38 16-56 16S88 82 72 72Zm56-16c-34 0-56 10-56 16s22 16 56 16 56-10 56-16-22-16-56-16Z" />
+  <path fill="#101316" d="M104 120h24c22 0 36 12 36 32s-14 32-36 32h-24v-16h24c11 0 18-5 18-16s-7-16-18-16h-24v-16Z" />
+  <path fill="#101316" d="M88 120h16v64H88z" />
+</svg>

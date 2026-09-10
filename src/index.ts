@@ -91,6 +91,11 @@ export async function handleRequest(request: IncomingMessage, response: ServerRe
       response.writeHead(200, { 'content-type': 'text/html' }).end(consolePage);
       return;
 
+    case 'GET /logo.svg':
+      const logo = await readFile('./logo.svg', 'utf8');
+      response.writeHead(200, { 'content-type': 'image/svg+xml' }).end(logo);
+      return;
+
     case 'GET /index.mjs':
       return onEsModule(request, response);
 

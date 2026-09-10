@@ -55,6 +55,7 @@
         padding: 10px 14px;
       }
       .brand { color: var(--accent); font-weight: 700; letter-spacing: .08em; }
+      .brand-mark { border-radius: 5px; height: 24px; width: 24px; }
       .db-name { color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
       .spacer { flex: 1; }
       .workspace {
@@ -221,6 +222,7 @@
     </script>
       <div class="shell">
         <header class="topbar">
+          <img class="brand-mark" src="./logo.svg" alt="d0" />
           <span class="brand">D0</span>
           <span class="db-name">{{ name || 'database' }}</span>
           <span class="spacer"></span>
