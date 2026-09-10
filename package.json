@@ -1,6 +1,7 @@
 {
   "name": "@cloud-cli/d0",
   "version": "0.0.0",
+  "packageManager": "pnpm@12.3.4",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "type": "module",
