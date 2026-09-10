@@ -2,11 +2,11 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="component" href="https://sodium.static.apphor.de/code-editor.html" />
     <link rel="component" href="https://sodium.static.apphor.de/code-block.html" />
     <link rel="component" href="https://sodium.static.apphor.de/mermaid-graph.html" />
-    <title></title>
+    <title>D0 Console</title>
     <script type="importmap">
       {
         "imports": {
@@ -16,177 +16,264 @@
         }
       }
     </script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" />
-  </head>
-  <body class="bg-gray-900 text-white font-sans h-screen flex flex-col overflow-hidden">
-    <app-main class="contents"></app-main>
+    <style>
+      :root {
+        color-scheme: dark;
+        --background: #101316;
+        --panel: #171b20;
+        --panel-raised: #1d232a;
+        --border: #303943;
+        --muted: #8d99a8;
+        --text: #edf2f7;
+        --accent: #8bd5ca;
+        --danger: #ff8f8f;
+      }
 
+      * { box-sizing: border-box; }
+      html, body { height: 100%; margin: 0; }
+      body {
+        background: var(--background);
+        color: var(--text);
+        font: 14px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace;
+      }
+      button, input { font: inherit; }
+      button {
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        background: var(--panel-raised);
+        color: var(--text);
+        cursor: pointer;
+        padding: 7px 11px;
+      }
+      button:hover, button:focus-visible { border-color: var(--accent); color: var(--accent); }
+      .shell { display: grid; grid-template-rows: auto 1fr; height: 100%; min-height: 0; }
+      .topbar {
+        align-items: center;
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        gap: 10px;
+        padding: 10px 14px;
+      }
+      .brand { color: var(--accent); font-weight: 700; letter-spacing: .08em; }
+      .db-name { color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .spacer { flex: 1; }
+      .workspace {
+        display: grid;
+        grid-template-columns: 245px minmax(360px, 1fr) minmax(360px, 1.15fr);
+        min-height: 0;
+      }
+      .panel { min-width: 0; min-height: 0; overflow: hidden; }
+      .schema-panel { border-right: 1px solid var(--border); display: flex; flex-direction: column; }
+      .editor-panel { border-right: 1px solid var(--border); display: grid; grid-template-rows: minmax(190px, 38%) minmax(0, 1fr); }
+      .graph-panel { display: grid; grid-template-rows: auto minmax(0, 1fr); padding: 12px; gap: 10px; }
+      .panel-header { align-items: center; display: flex; gap: 8px; padding: 12px; }
+      .panel-title { color: var(--muted); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; }
+      .schema-count { color: var(--accent); margin-left: auto; }
+      .schema-list { border-top: 1px solid var(--border); flex: 1; overflow: auto; padding: 7px; }
+      .schema-item { background: transparent; border: 0; display: block; padding: 9px; text-align: left; width: 100%; }
+      .schema-item:hover { background: var(--panel-raised); }
+      .schema-kind { color: var(--muted); font-size: 11px; margin-left: 5px; }
+      .schema-columns { color: var(--muted); display: block; font-size: 11px; margin-top: 3px; }
+      .editor, .results { min-height: 0; padding: 12px; }
+      .editor { border-bottom: 1px solid var(--border); display: grid; grid-template-rows: auto minmax(0, 1fr) auto; gap: 8px; }
+      .editor-actions { display: flex; gap: 8px; justify-content: flex-end; }
+      .run { background: var(--accent); border-color: var(--accent); color: #0d1918; font-weight: 700; }
+      .run:hover, .run:focus-visible { color: #0d1918; opacity: .85; }
+      code-editor { display: block; min-height: 0; }
+      .results { overflow: auto; }
+      .result { border-bottom: 1px solid var(--border); display: block; padding: 8px 0; white-space: pre-wrap; }
+      .error { color: var(--danger); padding: 8px 0; white-space: pre-wrap; }
+      .graph-wrap { background: #f8fafc; border-radius: 8px; min-height: 0; overflow: auto; }
+      mermaid-graph { display: block; min-height: 100%; min-width: 100%; }
+      .hint { color: var(--muted); font-size: 12px; padding: 12px; }
+
+      @media (max-width: 1050px) {
+        .workspace { grid-template-columns: 210px minmax(330px, 1fr); }
+        .graph-panel { border-top: 1px solid var(--border); grid-column: 1 / -1; min-height: 420px; }
+        .editor-panel { border-right: 0; }
+      }
+      @media (max-width: 680px) {
+        .workspace { display: block; overflow: auto; }
+        .schema-panel, .editor-panel { border-right: 0; border-bottom: 1px solid var(--border); }
+        .schema-panel { max-height: 220px; }
+        .editor-panel { height: 560px; }
+        .graph-panel { min-height: 420px; }
+        .db-name { display: none; }
+      }
+    </style>
+  </head>
+  <body>
     <script type="module">
       import '@li3/web';
     </script>
+    <app-main class="contents"></app-main>
 
     <template component="app-main">
-      <div class="flex flex-col items-stretch justify-between space-y-2 p-4 h-full">
-        <div class="flex w-full h-full">
-          <div class="p-2 font-mono text-xs h-full w-1/2 overflow-auto">
-            <template for="r of responses">
-              <code-block
-                bind-source="r || ''"
-                language="json"
-                class="py-1 border-b block w-full whitespace-pre-wrap overflow-auto"
-                style="max-height: 10rem"
-              ></code-block>
-            </template>
-            <div class="text-red-400 text-sm">{{ error || '' }}</div>
-          </div>
-          <mermaid-graph class="h-full w-1/2 overflow-auto bg-white rounded-lg border" bind-input="diagram"></mermaid-graph>
-        </div>
-        <div class="flex-1">
-          <input
-            bind-value="name"
-            placeholder="Name"
-            class="block w-full p-2 rounded-md bg-gray-300 border text-black text-xs font-mono"
-            on-change="setName($event.target.value)"
-          />
-        </div>
-        <div class="flex-1">
-          <form on-submit.prevent="onRun()">
-            <code-editor
-              nolines="1"
-              nostatus="1"
-              language="sql"
-              bind-value="query"
-              on-change="setQuery($event.target.value)"
-              on-keyup="onKeyUp($event)"
-              class="font-mono text-xs border rounded-md w-full block h-32"
-            ></code-editor>
-            <div class="flex items-center justify-end mt-2">
-              <button
-                type="submit"
-                bind-disabled="!name || !query"
-                class="bg-gray-400 text-black px-4 py-2 rounded focus:bg-white hover:bg-white"
-              >
-                Run
-              </button>
+    <script setup>
+      import { hook, onInit } from '@li3/web';
 
-              <button
-                type="button"
-                on-click="onUpdateGraph()"
-                bind-disabled="!name"
-                class="bg-gray-400 text-black px-4 py-2 rounded focus:bg-white hover:bg-white"
-              >
-                Graph
-              </button>
+      function schemaToMermaid(schema) {
+        const tables = schema.tables.filter((table) => table.type === 'table' && table.sql);
+        const names = new Map(tables.map((table) => [table.name, mermaidName(table.name)]));
+        let diagram = 'erDiagram\n';
+
+        for (const table of tables) {
+          const name = names.get(table.name);
+          diagram += `    ${name} {\n`;
+          for (const column of table.columns.filter((column) => !column.hidden)) {
+            const type = mermaidType(column.type);
+            const key = column.pk ? ' PK' : '';
+            diagram += `        ${type} ${mermaidName(column.name)}${key}\n`;
+          }
+          diagram += '    }\n';
+        }
+
+        for (const table of tables) {
+          for (const foreignKey of table.foreignKeys) {
+            const parent = names.get(foreignKey.table);
+            const child = names.get(table.name);
+            if (parent && child) diagram += `    ${parent} ||--o{ ${child} : references\n`;
+          }
+        }
+        return diagram;
+      }
+
+      function mermaidName(value) {
+        return String(value).replace(/[^a-zA-Z0-9_]/g, '_');
+      }
+
+      function mermaidType(value) {
+        return String(value || 'value').replace(/[^a-zA-Z0-9_]/g, '_').toLowerCase();
+      }
+
+      function pretty(value) {
+        return JSON.stringify(value, null, 2);
+      }
+
+      function escapeQueryIdentifier(value) {
+        return String(value).replaceAll('"', '""');
+      }
+
+      function appMain() {
+        const [schemaData, setSchemaData] = hook(null);
+        const [schemaTables, setSchemaTables] = hook([]);
+        const [diagram, setDiagram] = hook('erDiagram\n');
+        const [query, setQuery] = hook('');
+        const [responses, setResponses] = hook([]);
+        const [error, setError] = hook('');
+        const [loading, setLoading] = hook(false);
+        const [name] = hook(new URL(location.href).hostname.split('.')[0]);
+
+        async function database() {
+          return import(`https://${name.value}.db.apphor.de/index.mjs`);
+        }
+
+        async function loadSchema() {
+          try {
+            setError('');
+            setLoading(true);
+            const db = await database();
+            const value = await db.schema();
+            setSchemaData(value);
+            setSchemaTables(value.tables.filter((table) => !table.name.startsWith('sqlite_')));
+            setDiagram(schemaToMermaid(value));
+          } catch (e) {
+            setError(String(e));
+          } finally {
+            setLoading(false);
+          }
+        }
+
+        async function runQuery() {
+          if (!query.value.trim()) return;
+          try {
+            setError('');
+            const db = await database();
+            const method = /^\s*(select|pragma|with)\b/i.test(query.value) ? 'all' : 'run';
+            const result = await db.query(method, query.value);
+            setResponses([...responses.value, pretty(result)]);
+          } catch (e) {
+            setError(String(e));
+          }
+        }
+
+        function selectTable(tableName) {
+          setQuery(`SELECT * FROM "${escapeQueryIdentifier(tableName)}" LIMIT 100;`);
+        }
+
+        function onKeyUp(event) {
+          if ((event.metaKey || event.ctrlKey) && event.key === 'Enter') {
+            event.preventDefault();
+            runQuery();
+          }
+        }
+
+        onInit(loadSchema);
+
+        return {
+          name, schemaData, schemaTables, diagram, query, responses, error, loading,
+          setQuery, loadSchema, runQuery, selectTable, onKeyUp,
+        };
+      }
+
+      export default appMain;
+
+    </script>
+      <div class="shell">
+        <header class="topbar">
+          <span class="brand">D0</span>
+          <span class="db-name">{{ name || 'database' }}</span>
+          <span class="spacer"></span>
+          <button type="button" on-click="loadSchema()">{{ loading ? 'Loading...' : 'Refresh schema' }}</button>
+        </header>
+        <main class="workspace">
+          <aside class="panel schema-panel">
+            <div class="panel-header">
+              <span class="panel-title">Schema</span>
+              <span class="schema-count">{{ schemaTables.length }}</span>
             </div>
-          </form>
-        </div>
+            <div class="schema-list">
+              <template if="!schemaTables.length">
+                <div class="hint">No tables discovered.</div>
+              </template>
+              <template for="table of schemaTables">
+                <button class="schema-item" type="button" on-click="selectTable(table.name)">
+                  {{ table.name }} <span class="schema-kind">{{ table.type }}</span>
+                  <span class="schema-columns">{{ table.columns.length }} columns</span>
+                </button>
+              </template>
+            </div>
+          </aside>
+
+          <section class="panel editor-panel">
+            <div class="editor">
+              <div class="panel-title">Query</div>
+              <code-editor nolines="1" language="sql" bind-value="query" on-change="setQuery($event.target.value)" on-keyup="onKeyUp($event)"></code-editor>
+              <div class="editor-actions">
+                <button class="run" type="button" on-click="runQuery()">Run query</button>
+              </div>
+            </div>
+            <div class="results">
+              <div class="panel-title">Results</div>
+              <template for="result of responses">
+                <code-block class="result" bind-source="result" language="json"></code-block>
+              </template>
+              <div class="error">{{ error || '' }}</div>
+            </div>
+          </section>
+
+          <section class="panel graph-panel">
+            <div class="panel-header" style="padding: 0">
+              <span class="panel-title">Relationships</span>
+              <span class="spacer"></span>
+              <button type="button" on-click="loadSchema()">Redraw</button>
+            </div>
+            <div class="graph-wrap">
+              <mermaid-graph class="h-full w-full" bind-input="diagram"></mermaid-graph>
+            </div>
+          </section>
+        </main>
       </div>
-
-      <script setup>
-        import { hook, onInit } from '@li3/web';
-
-        export default function () {
-          const [diagram, setDiagram] = hook(null);
-          const url = new URL(location.href);
-          const [name, setName] = hook(url.hostname.replace('.db.apphor.de', ''));
-          const [query, setQuery] = hook('');
-          const [responses] = hook('');
-          const [error, setError] = hook('');
-
-          function append(r) {
-            responses.value = [...responses.value, r];
-          }
-
-          function onKeyUp(event) {
-            if ((event.metaKey || event.ctrlKey) && event.key === 'Enter') {
-              event.preventDefault();
-              onRun();
-            }
-          }
-
-          async function runQuery(q) {
-            const db = await import(`https://${name}.db.apphor.de/index.mjs`);
-            if (!q.endsWith(';')) {
-              q += ';';
-            }
-
-            const s = await (q.toLowerCase().includes('select ') ? db.all(q) : db.run(q));
-            return s;
-          }
-
-          async function onRun() {
-            if (!name.value) return;
-
-            try {
-              setError('');
-              const q = query.value.trim();
-              const s = await runQuery(q);
-              append(JSON.stringify(s, null, 2));
-            } catch (e) {
-              setError(e);
-            }
-          }
-
-          async function onUpdateGraph() {
-            if (!name.value) return;
-            const schema = await runQuery('select * from sqlite_schema;');
-            setDiagram(schemaToMermaid(schema));
-          }
-
-          onInit(onUpdateGraph);
-
-          return { name, diagram, query, responses, setName, setQuery, error, onRun, onKeyUp, onUpdateGraph };
-        }
-
-        function schemaToMermaid(schema) {
-          let diagram = 'erDiagram\n';
-
-          for (const row of schema) {
-            // 1. Ignore indexes, views, and system tables
-            if (row.type !== 'table' || row.name.startsWith('sqlite_') || !row.sql) continue;
-
-            const tableName = row.name;
-            const sql = row.sql;
-
-            // 2. Extract relationships (matches both inline 'REFERENCES tbl' and 'FOREIGN KEY (...) REFERENCES tbl')
-            const fkRegex = /REFERENCES\s+([^\s(;]+)/gi;
-            let match;
-            const referencedTables = new Set();
-
-            while ((match = fkRegex.exec(sql)) !== null) {
-              // Clean up target table name (strip quotes/brackets)
-              const parentTable = match[1].replace(/[`"'[\]]/g, '').split('(')[0];
-              referencedTables.add(parentTable);
-            }
-
-            referencedTables.forEach((parentTable) => {
-              diagram += `    ${parentTable} ||--o{ ${tableName} : "references"\n`;
-            });
-
-            // 3. Extract columns
-            diagram += `    ${tableName} {\n`;
-            const bodyMatch = sql.match(/\(([\s\S]+)\)/);
-
-            if (bodyMatch) {
-              const definitions = bodyMatch[1].split(/,\s*(?![^()]*\))/);
-              definitions.forEach((def) => {
-                const parts = def.trim().split(/\s+/);
-                const keyword = parts[0] ? parts[0].toUpperCase() : '';
-
-                // Skip table-level constraints
-                if (parts[0] && !['CONSTRAINT', 'PRIMARY', 'FOREIGN', 'UNIQUE', 'CHECK'].includes(keyword)) {
-                  const colName = parts[0].replace(/[`"'[\]]/g, '');
-                  const colType = parts[1] ? parts[1].replace(/,/g, '') : 'TEXT';
-                  diagram += `        ${colType} ${colName}\n`;
-                }
-              });
-            }
-            diagram += `    }\n`;
-          }
-
-          return diagram;
-        }
-      </script>
     </template>
   </body>
 </html>
