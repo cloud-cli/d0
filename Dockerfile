@@ -9,6 +9,9 @@ RUN pnpm i && pnpm build && rm -rf node_modules/ src/ && pnpm store prune
 FROM ghcr.io/cloud-cli/node:latest
 
 ENV NODE_ENV=production
+ENV DATA_PATH=/home/app/data
 WORKDIR /home/app
-COPY --from=builder /home/app/ ./
+COPY --from=builder --chown=node:node /home/app/ ./
 RUN pnpm install --prod --frozen-lockfile && pnpm rebuild better-sqlite3
+RUN mkdir -p /home/app/data && chown node:node /home/app/data
+VOLUME ["/home/app/data"]

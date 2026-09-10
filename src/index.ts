@@ -1,4 +1,5 @@
 import { createServer, IncomingMessage, ServerResponse } from 'node:http';
+import { mkdirSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import SQLite, { Database } from 'better-sqlite3';
 import { join } from 'node:path';
@@ -12,6 +13,8 @@ const maxDatabases = Math.max(1, Number.parseInt(process.env.MAX_DATABASES || '3
 const maxBodyBytes = Math.max(1, Number.parseInt(process.env.MAX_BODY_BYTES || '1048576', 10) || 1048576);
 const slowQueryMs = Math.max(0, Number.parseInt(process.env.SLOW_QUERY_MS || '1000', 10) || 1000);
 const databases = new Map<string, Database>();
+
+mkdirSync(dataPath, { recursive: true });
 
 export function getDatabase(file: string): Database {
   const fullPath = join(dataPath, file);
