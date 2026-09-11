@@ -431,7 +431,7 @@
             <div class="editor">
               <div class="flex items-center justify-between gap-2">
                 <div class="panel-title">Query</div>
-                <select class="rounded-md border border-[#303943] bg-[#1d232a] px-2 py-1 text-xs text-[#edf2f7] outline-none focus:border-[#8bd5ca]" bind-value="method" aria-label="Query method">
+                <select class="rounded-md border border-[#303943] bg-[#1d232a] px-2 py-1 text-xs text-[#edf2f7] outline-none focus:border-[#8bd5ca]" bind-value="method" on-change="setMethod($event.target.value)" aria-label="Query method">
                   <option value="all">all rows</option>
                   <option value="get">one row</option>
                   <option value="run">run statement</option>
