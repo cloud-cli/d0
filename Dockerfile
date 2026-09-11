@@ -1,4 +1,4 @@
-FROM ghcr.io/cloud-cli/node:latest AS builder
+FROM ghcr.io/cloud-cli/image-node:latest AS builder
 
 USER root
 WORKDIR /home/app
@@ -7,7 +7,7 @@ ENV CI=true
 RUN npm install --global pnpm@12.3.4
 RUN pnpm i && pnpm build && rm -rf node_modules/ src/
 
-FROM ghcr.io/cloud-cli/node:latest
+FROM ghcr.io/cloud-cli/image-node:latest
 
 USER root
 ENV NODE_ENV=production
