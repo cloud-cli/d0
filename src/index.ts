@@ -184,6 +184,7 @@ function quotePragmaValue(value: string) {
 
 export async function onQuery(request: IncomingMessage, response: ServerResponse, db: string) {
   const query = await readBody(request);
+  let isTransaction = false;
 
   if (!query) {
     response.writeHead(413).end('Request body too large.');
@@ -199,15 +200,16 @@ export async function onQuery(request: IncomingMessage, response: ServerResponse
     const { s = '', d, m = 'run', p, t } = JSON.parse(query.toString('utf-8'));
 
     if (t !== undefined) {
+      isTransaction = true;
       if (!Array.isArray(t) || !t.length) throw new Error('Invalid transaction.');
 
       const sqlite = getDatabase(db);
       applyPragmas(sqlite, p);
       const started = performance.now();
-      const result = sqlite.transaction(() => t.map((statement) => executeStatement(sqlite, statement)))();
+      sqlite.transaction(() => t.map((statement) => executeStatement(sqlite, statement)))();
       logSlowQuery(started, `transaction (${t.length} statements)`);
       response.writeHead(200, { 'content-type': 'application/json' });
-      response.end(JSON.stringify(result));
+      response.end(JSON.stringify({ success: true }));
       return;
     }
 
@@ -231,7 +233,8 @@ export async function onQuery(request: IncomingMessage, response: ServerResponse
   } catch (error) {
     DEBUG && console.error(error);
     const status = (error as { code?: string }).code === 'SQLITE_BUSY' ? 503 : 400;
-    response.writeHead(status).end(String(error));
+    const message = String(error).replaceAll(dataPath, '[database]');
+    response.writeHead(status).end(isTransaction ? `Transaction failed: ${message}` : message);
   }
 }
 
@@ -266,7 +269,10 @@ function executeStatement(sqlite: Database, statement: { s?: unknown; d?: unknow
     throw new Error('Invalid transaction statement.');
   }
 
-  if (method === 'exec') return sqlite.exec(sql.trim());
+  if (method === 'exec') {
+    sqlite.exec(sql.trim());
+    return null;
+  }
 
   const runner = sqlite.prepare(sql.trim());
   const execute = (runner as unknown as Record<string, (data?: unknown) => unknown>)[method];
