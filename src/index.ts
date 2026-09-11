@@ -121,11 +121,10 @@ async function onSchema(
   try {
     const sqlite = getDatabase(db);
     const schema = getSchema(sqlite, includeInternal);
-    response.writeHead(200, { 'content-type': 'application/json' });
-    response.end(JSON.stringify(schema));
+    sendJson(response, 200, schema);
   } catch (error) {
     DEBUG && console.error(error);
-    response.writeHead(400).end(String(error));
+    sendError(response, 400, error);
   }
 }
 
@@ -208,8 +207,7 @@ export async function onQuery(request: IncomingMessage, response: ServerResponse
       const started = performance.now();
       sqlite.transaction(() => t.map((statement) => executeStatement(sqlite, statement)))();
       logSlowQuery(started, `transaction (${t.length} statements)`);
-      response.writeHead(200, { 'content-type': 'application/json' });
-      response.end(JSON.stringify({ success: true }));
+      sendJson(response, 200, { success: true });
       return;
     }
 
@@ -227,15 +225,26 @@ export async function onQuery(request: IncomingMessage, response: ServerResponse
     const result = executeStatement(sqlite, { s, d, m });
     logSlowQuery(started, s.trim());
 
-    response.writeHead(200, { 'content-type': 'application/json' });
-    response.end(JSON.stringify(result ?? null));
+    sendJson(response, 200, result ?? null);
     DEBUG && console.log(s.trim(), d, result);
   } catch (error) {
     DEBUG && console.error(error);
     const status = (error as { code?: string }).code === 'SQLITE_BUSY' ? 503 : 400;
-    const message = String(error).replaceAll(dataPath, '[database]');
-    response.writeHead(status).end(isTransaction ? `Transaction failed: ${message}` : message);
+    sendError(response, status, error, isTransaction ? 'Transaction failed: ' : '');
   }
+}
+
+function redactDataPath(value: string) {
+  return value.replaceAll(dataPath, '***');
+}
+
+function sendJson(response: ServerResponse, status: number, value: unknown) {
+  response.writeHead(status, { 'content-type': 'application/json' });
+  response.end(redactDataPath(JSON.stringify(value)));
+}
+
+function sendError(response: ServerResponse, status: number, error: unknown, prefix = '') {
+  response.writeHead(status).end(redactDataPath(prefix + String(error)));
 }
 
 async function readBody(request: IncomingMessage): Promise<Buffer | null> {
@@ -295,5 +304,5 @@ async function onEsModule(request: IncomingMessage, response: ServerResponse) {
       'Content-Type': 'text/javascript',
       'Access-Control-Allow-Origin': '*',
     })
-    .end(code.replace('__API_URL__', hostname));
+    .end(redactDataPath(code.replace('__API_URL__', hostname)));
 }
