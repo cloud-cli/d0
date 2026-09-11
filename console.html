@@ -326,6 +326,7 @@
           const [schemaTables, setSchemaTables] = hook([]);
           const [diagram, setDiagram] = hook('erDiagram\n');
           const [query, setQuery] = hook('');
+          const [method, setMethod] = hook('all');
           const [responses, setResponses] = hook([]);
           const [error, setError] = hook('');
           const [loading, setLoading] = hook(false);
@@ -350,8 +351,9 @@
             if (!query.value.trim()) return;
             try {
               setError('');
-              const method = /^\s*(select|pragma|with)\b/i.test(query.value) ? 'all' : 'run';
-              const result = await db.query(method, query.value);
+              const result = method.value === 'transaction'
+                ? await db.transaction([{ s: query.value, m: 'exec' }])
+                : await db.query(method.value, query.value);
               setResponses([...responses.value, pretty(result)]);
             } catch (e) {
               setError(String(e));
@@ -359,6 +361,7 @@
           }
 
           function selectTable(tableName) {
+            setMethod('all');
             setQuery(`SELECT * FROM "${escapeQueryIdentifier(tableName)}" LIMIT 100;`);
           }
 
@@ -381,10 +384,12 @@
             schemaTables,
             diagram,
             query,
+            method,
             responses,
             error,
             loading,
             setQuery,
+            setMethod,
             loadSchema,
             runQuery,
             selectTable,
@@ -424,7 +429,16 @@
 
           <section class="panel editor-panel grid min-h-0 min-w-0 grid-rows-[minmax(190px,38%)_minmax(0,1fr)] overflow-hidden border-r border-[#303943] max-[1050px]:border-r-0 max-[680px]:h-[560px] max-[680px]:border-b">
             <div class="editor">
-              <div class="panel-title">Query</div>
+              <div class="flex items-center justify-between gap-2">
+                <div class="panel-title">Query</div>
+                <select class="rounded-md border border-[#303943] bg-[#1d232a] px-2 py-1 text-xs text-[#edf2f7] outline-none focus:border-[#8bd5ca]" bind-value="method" aria-label="Query method">
+                  <option value="all">all rows</option>
+                  <option value="get">one row</option>
+                  <option value="run">run statement</option>
+                  <option value="exec">execute SQL</option>
+                  <option value="transaction">transaction</option>
+                </select>
+              </div>
               <code-editor
                 nolines="1"
                 nostatus="1"

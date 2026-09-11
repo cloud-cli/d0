@@ -13,6 +13,8 @@ const schema = await db.schema();
 console.log(schema.tables, schema.statements);
 ```
 
+The web console uses an explicit method selector instead of guessing from SQL text. Use `all` or `get` for reads, `run` for one prepared statement, `exec` for DDL or multiple statements, and `transaction` to run the entered SQL atomically.
+
 **POST /query**
 
 Run a prepared SQLite statement.
