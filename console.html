@@ -29,14 +29,27 @@
         --danger: #ff8f8f;
       }
 
-      * { box-sizing: border-box; }
-      html, body { height: 100%; margin: 0; }
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        height: 100%;
+        margin: 0;
+      }
       body {
         background: var(--background);
         color: var(--text);
-        font: 14px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace;
+        font:
+          14px/1.4 ui-monospace,
+          SFMono-Regular,
+          Menlo,
+          monospace;
       }
-      button, input { font: inherit; }
+      button,
+      input {
+        font: inherit;
+      }
       button {
         border: 1px solid var(--border);
         border-radius: 6px;
@@ -45,8 +58,17 @@
         cursor: pointer;
         padding: 7px 11px;
       }
-      button:hover, button:focus-visible { border-color: var(--accent); color: var(--accent); }
-      .shell { display: grid; grid-template-rows: auto 1fr; height: 100%; min-height: 0; }
+      button:hover,
+      button:focus-visible {
+        border-color: var(--accent);
+        color: var(--accent);
+      }
+      .shell {
+        display: grid;
+        grid-template-rows: auto 1fr;
+        height: 100%;
+        min-height: 0;
+      }
       .topbar {
         align-items: center;
         border-bottom: 1px solid var(--border);
@@ -54,52 +76,192 @@
         gap: 10px;
         padding: 10px 14px;
       }
-      .brand { color: var(--accent); font-weight: 700; letter-spacing: .08em; }
-      .brand-mark { border-radius: 5px; height: 24px; width: 24px; }
-      .db-name { color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-      .spacer { flex: 1; }
+      .brand {
+        color: var(--accent);
+        font-weight: 700;
+        letter-spacing: 0.08em;
+      }
+      .brand-mark {
+        border-radius: 5px;
+        height: 24px;
+        width: 24px;
+      }
+      .db-name {
+        color: var(--muted);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .spacer {
+        flex: 1;
+      }
       .workspace {
         display: grid;
         grid-template-columns: 245px minmax(360px, 1fr) minmax(360px, 1.15fr);
         min-height: 0;
       }
-      .panel { min-width: 0; min-height: 0; overflow: hidden; }
-      .schema-panel { border-right: 1px solid var(--border); display: flex; flex-direction: column; }
-      .editor-panel { border-right: 1px solid var(--border); display: grid; grid-template-rows: minmax(190px, 38%) minmax(0, 1fr); }
-      .graph-panel { display: grid; grid-template-rows: auto minmax(0, 1fr); padding: 12px; gap: 10px; }
-      .panel-header { align-items: center; display: flex; gap: 8px; padding: 12px; }
-      .panel-title { color: var(--muted); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; }
-      .schema-count { color: var(--accent); margin-left: auto; }
-      .schema-list { border-top: 1px solid var(--border); flex: 1; overflow: auto; padding: 7px; }
-      .schema-item { background: transparent; border: 0; display: block; padding: 9px; text-align: left; width: 100%; }
-      .schema-item:hover { background: var(--panel-raised); }
-      .schema-kind { color: var(--muted); font-size: 11px; margin-left: 5px; }
-      .schema-columns { color: var(--muted); display: block; font-size: 11px; margin-top: 3px; }
-      .editor, .results { min-height: 0; padding: 12px; }
-      .editor { border-bottom: 1px solid var(--border); display: grid; grid-template-rows: auto minmax(0, 1fr) auto; gap: 8px; }
-      .editor-actions { display: flex; gap: 8px; justify-content: flex-end; }
-      .run { background: var(--accent); border-color: var(--accent); color: #0d1918; font-weight: 700; }
-      .run:hover, .run:focus-visible { color: #0d1918; opacity: .85; }
-      code-editor { display: block; min-height: 0; }
-      .results { overflow: auto; }
-      .result { border-bottom: 1px solid var(--border); display: block; padding: 8px 0; white-space: pre-wrap; }
-      .error { color: var(--danger); padding: 8px 0; white-space: pre-wrap; }
-      .graph-wrap { background: #f8fafc; border-radius: 8px; min-height: 0; overflow: auto; }
-      mermaid-graph { display: block; min-height: 100%; min-width: 100%; }
-      .hint { color: var(--muted); font-size: 12px; padding: 12px; }
+      .panel {
+        min-width: 0;
+        min-height: 0;
+        overflow: hidden;
+      }
+      .schema-panel {
+        border-right: 1px solid var(--border);
+        display: flex;
+        flex-direction: column;
+      }
+      .editor-panel {
+        border-right: 1px solid var(--border);
+        display: grid;
+        grid-template-rows: minmax(190px, 38%) minmax(0, 1fr);
+      }
+      .graph-panel {
+        display: grid;
+        grid-template-rows: auto minmax(0, 1fr);
+        padding: 12px;
+        gap: 10px;
+      }
+      .panel-header {
+        align-items: center;
+        display: flex;
+        gap: 8px;
+        padding: 12px;
+      }
+      .panel-title {
+        color: var(--muted);
+        font-size: 11px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+      }
+      .schema-count {
+        color: var(--accent);
+        margin-left: auto;
+      }
+      .schema-list {
+        border-top: 1px solid var(--border);
+        flex: 1;
+        overflow: auto;
+        padding: 7px;
+      }
+      .schema-item {
+        background: transparent;
+        border: 0;
+        display: block;
+        padding: 9px;
+        text-align: left;
+        width: 100%;
+      }
+      .schema-item:hover {
+        background: var(--panel-raised);
+      }
+      .schema-kind {
+        color: var(--muted);
+        font-size: 11px;
+        margin-left: 5px;
+      }
+      .schema-columns {
+        color: var(--muted);
+        display: block;
+        font-size: 11px;
+        margin-top: 3px;
+      }
+      .editor,
+      .results {
+        min-height: 0;
+        padding: 12px;
+      }
+      .editor {
+        border-bottom: 1px solid var(--border);
+        display: grid;
+        grid-template-rows: auto minmax(0, 1fr) auto;
+        gap: 8px;
+      }
+      .editor-actions {
+        display: flex;
+        gap: 8px;
+        justify-content: flex-end;
+      }
+      .run {
+        background: var(--accent);
+        border-color: var(--accent);
+        color: #0d1918;
+        font-weight: 700;
+      }
+      .run:hover,
+      .run:focus-visible {
+        color: #0d1918;
+        opacity: 0.85;
+      }
+      code-editor {
+        display: block;
+        min-height: 0;
+      }
+      .results {
+        overflow: auto;
+      }
+      .result {
+        border-bottom: 1px solid var(--border);
+        display: block;
+        padding: 8px 0;
+        white-space: pre-wrap;
+      }
+      .error {
+        color: var(--danger);
+        padding: 8px 0;
+        white-space: pre-wrap;
+      }
+      .graph-wrap {
+        background: #f8fafc;
+        border-radius: 8px;
+        min-height: 0;
+        overflow: auto;
+      }
+      mermaid-graph {
+        display: block;
+        min-height: 100%;
+        min-width: 100%;
+      }
+      .hint {
+        color: var(--muted);
+        font-size: 12px;
+        padding: 12px;
+      }
 
       @media (max-width: 1050px) {
-        .workspace { grid-template-columns: 210px minmax(330px, 1fr); }
-        .graph-panel { border-top: 1px solid var(--border); grid-column: 1 / -1; min-height: 420px; }
-        .editor-panel { border-right: 0; }
+        .workspace {
+          grid-template-columns: 210px minmax(330px, 1fr);
+        }
+        .graph-panel {
+          border-top: 1px solid var(--border);
+          grid-column: 1 / -1;
+          min-height: 420px;
+        }
+        .editor-panel {
+          border-right: 0;
+        }
       }
       @media (max-width: 680px) {
-        .workspace { display: block; overflow: auto; }
-        .schema-panel, .editor-panel { border-right: 0; border-bottom: 1px solid var(--border); }
-        .schema-panel { max-height: 220px; }
-        .editor-panel { height: 560px; }
-        .graph-panel { min-height: 420px; }
-        .db-name { display: none; }
+        .workspace {
+          display: block;
+          overflow: auto;
+        }
+        .schema-panel,
+        .editor-panel {
+          border-right: 0;
+          border-bottom: 1px solid var(--border);
+        }
+        .schema-panel {
+          max-height: 220px;
+        }
+        .editor-panel {
+          height: 560px;
+        }
+        .graph-panel {
+          min-height: 420px;
+        }
+        .db-name {
+          display: none;
+        }
       }
     </style>
   </head>
@@ -110,116 +272,128 @@
     <app-main class="contents"></app-main>
 
     <template component="app-main">
-    <script setup>
-      import { hook, onInit } from '@li3/web';
+      <script setup>
+        import { hook, onInit } from '@li3/web';
 
-      function schemaToMermaid(schema) {
-        const tables = schema.tables.filter((table) => table.type === 'table' && table.sql);
-        const names = new Map(tables.map((table) => [table.name, mermaidName(table.name)]));
-        let diagram = 'erDiagram\n';
+        function schemaToMermaid(schema) {
+          const tables = schema.tables.filter((table) => table.type === 'table' && table.sql);
+          const names = new Map(tables.map((table) => [table.name, mermaidName(table.name)]));
+          let diagram = 'erDiagram\n';
 
-        for (const table of tables) {
-          const name = names.get(table.name);
-          diagram += `    ${name} {\n`;
-          for (const column of table.columns.filter((column) => !column.hidden)) {
-            const type = mermaidType(column.type);
-            const key = column.pk ? ' PK' : '';
-            diagram += `        ${type} ${mermaidName(column.name)}${key}\n`;
+          for (const table of tables) {
+            const name = names.get(table.name);
+            diagram += `    ${name} {\n`;
+            for (const column of table.columns.filter((column) => !column.hidden)) {
+              const type = mermaidType(column.type);
+              const key = column.pk ? ' PK' : '';
+              diagram += `        ${type} ${mermaidName(column.name)}${key}\n`;
+            }
+            diagram += '    }\n';
           }
-          diagram += '    }\n';
-        }
 
-        for (const table of tables) {
-          for (const foreignKey of table.foreignKeys) {
-            const parent = names.get(foreignKey.table);
-            const child = names.get(table.name);
-            if (parent && child) diagram += `    ${parent} ||--o{ ${child} : references\n`;
+          for (const table of tables) {
+            for (const foreignKey of table.foreignKeys) {
+              const parent = names.get(foreignKey.table);
+              const child = names.get(table.name);
+              if (parent && child) diagram += `    ${parent} ||--o{ ${child} : references\n`;
+            }
           }
-        }
-        return diagram;
-      }
-
-      function mermaidName(value) {
-        return String(value).replace(/[^a-zA-Z0-9_]/g, '_');
-      }
-
-      function mermaidType(value) {
-        return String(value || 'value').replace(/[^a-zA-Z0-9_]/g, '_').toLowerCase();
-      }
-
-      function pretty(value) {
-        return JSON.stringify(value, null, 2);
-      }
-
-      function escapeQueryIdentifier(value) {
-        return String(value).replaceAll('"', '""');
-      }
-
-      function appMain() {
-        const [schemaData, setSchemaData] = hook(null);
-        const [schemaTables, setSchemaTables] = hook([]);
-        const [diagram, setDiagram] = hook('erDiagram\n');
-        const [query, setQuery] = hook('');
-        const [responses, setResponses] = hook([]);
-        const [error, setError] = hook('');
-        const [loading, setLoading] = hook(false);
-        const [name] = hook(new URL(location.href).hostname.split('.')[0]);
-
-        async function database() {
-          return import(`https://${name.value}.db.apphor.de/index.mjs`);
+          return diagram;
         }
 
-        async function loadSchema() {
-          try {
-            setError('');
-            setLoading(true);
-            const db = await database();
-            const value = await db.schema();
-            setSchemaData(value);
-            setSchemaTables(value.tables.filter((table) => !table.name.startsWith('sqlite_')));
-            setDiagram(schemaToMermaid(value));
-          } catch (e) {
-            setError(String(e));
-          } finally {
-            setLoading(false);
+        function mermaidName(value) {
+          return String(value).replace(/[^a-zA-Z0-9_]/g, '_');
+        }
+
+        function mermaidType(value) {
+          return String(value || 'value')
+            .replace(/[^a-zA-Z0-9_]/g, '_')
+            .toLowerCase();
+        }
+
+        function pretty(value) {
+          return JSON.stringify(value, null, 2);
+        }
+
+        function escapeQueryIdentifier(value) {
+          return String(value).replaceAll('"', '""');
+        }
+
+        function appMain() {
+          const [schemaData, setSchemaData] = hook(null);
+          const [schemaTables, setSchemaTables] = hook([]);
+          const [diagram, setDiagram] = hook('erDiagram\n');
+          const [query, setQuery] = hook('');
+          const [responses, setResponses] = hook([]);
+          const [error, setError] = hook('');
+          const [loading, setLoading] = hook(false);
+          const name = new URL(location.href).hostname.split('.')[0];
+
+          async function database() {
+            return import(`https://${name}.db.apphor.de/index.mjs`);
           }
-        }
 
-        async function runQuery() {
-          if (!query.value.trim()) return;
-          try {
-            setError('');
-            const db = await database();
-            const method = /^\s*(select|pragma|with)\b/i.test(query.value) ? 'all' : 'run';
-            const result = await db.query(method, query.value);
-            setResponses([...responses.value, pretty(result)]);
-          } catch (e) {
-            setError(String(e));
+          async function loadSchema() {
+            try {
+              setError('');
+              setLoading(true);
+              const db = await database();
+              const value = await db.schema();
+              setSchemaData(value);
+              setSchemaTables(value.tables.filter((table) => !table.name.startsWith('sqlite_')));
+              setDiagram(schemaToMermaid(value));
+            } catch (e) {
+              setError(String(e));
+            } finally {
+              setLoading(false);
+            }
           }
-        }
 
-        function selectTable(tableName) {
-          setQuery(`SELECT * FROM "${escapeQueryIdentifier(tableName)}" LIMIT 100;`);
-        }
-
-        function onKeyUp(event) {
-          if ((event.metaKey || event.ctrlKey) && event.key === 'Enter') {
-            event.preventDefault();
-            runQuery();
+          async function runQuery() {
+            if (!query.value.trim()) return;
+            try {
+              setError('');
+              const db = await database();
+              const method = /^\s*(select|pragma|with)\b/i.test(query.value) ? 'all' : 'run';
+              const result = await db.query(method, query.value);
+              setResponses([...responses.value, pretty(result)]);
+            } catch (e) {
+              setError(String(e));
+            }
           }
+
+          function selectTable(tableName) {
+            setQuery(`SELECT * FROM "${escapeQueryIdentifier(tableName)}" LIMIT 100;`);
+          }
+
+          function onKeyUp(event) {
+            if ((event.metaKey || event.ctrlKey) && event.key === 'Enter') {
+              event.preventDefault();
+              runQuery();
+            }
+          }
+
+          onInit(loadSchema);
+
+          return {
+            name,
+            schemaData,
+            schemaTables,
+            diagram,
+            query,
+            responses,
+            error,
+            loading,
+            setQuery,
+            loadSchema,
+            runQuery,
+            selectTable,
+            onKeyUp,
+          };
         }
 
-        onInit(loadSchema);
-
-        return {
-          name, schemaData, schemaTables, diagram, query, responses, error, loading,
-          setQuery, loadSchema, runQuery, selectTable, onKeyUp,
-        };
-      }
-
-      export default appMain;
-
-    </script>
+        export default appMain;
+      </script>
       <div class="shell">
         <header class="topbar">
           <img class="brand-mark" src="./logo.svg" alt="d0" />
@@ -250,7 +424,15 @@
           <section class="panel editor-panel">
             <div class="editor">
               <div class="panel-title">Query</div>
-              <code-editor nolines="1" nostatus="1" theme="a11y-dark" language="sql" bind-value="query" on-change="setQuery($event.target.value)" on-keyup="onKeyUp($event)"></code-editor>
+              <code-editor
+                nolines="1"
+                nostatus="1"
+                theme="a11y-dark"
+                language="sql"
+                bind-value="query"
+                on-change="setQuery($event.target.value)"
+                on-keyup="onKeyUp($event)"
+              ></code-editor>
               <div class="editor-actions">
                 <button class="run" type="button" on-click="runQuery()">Run query</button>
               </div>
