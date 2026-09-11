@@ -274,7 +274,7 @@
     <template component="app-main">
       <script setup>
         import { hook, onInit } from '@li3/web';
-        import db from '/index.mjs';
+        import db from '@app/index.mjs';
 
         function schemaToMermaid(schema) {
           const tables = schema.tables.filter((table) => table.type === 'table' && table.sql);
