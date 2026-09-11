@@ -349,7 +349,6 @@
             if (!query.value.trim()) return;
             try {
               setError('');
-              const db = await database();
               const method = /^\s*(select|pragma|with)\b/i.test(query.value) ? 'all' : 'run';
               const result = await db.query(method, query.value);
               setResponses([...responses.value, pretty(result)]);
