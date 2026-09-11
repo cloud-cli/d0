@@ -16,6 +16,7 @@
         }
       }
     </script>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <style>
       :root {
         color-scheme: dark;
@@ -265,7 +266,7 @@
       }
     </style>
   </head>
-  <body>
+  <body class="h-full min-h-full bg-[#101316] font-mono text-sm leading-relaxed text-[#edf2f7]">
     <script type="module">
       import '@li3/web';
     </script>
@@ -361,6 +362,10 @@
             setQuery(`SELECT * FROM "${escapeQueryIdentifier(tableName)}" LIMIT 100;`);
           }
 
+          function clearResponses() {
+            setResponses([]);
+          }
+
           function onKeyUp(event) {
             if ((event.metaKey || event.ctrlKey) && event.key === 'Enter') {
               event.preventDefault();
@@ -383,32 +388,33 @@
             loadSchema,
             runQuery,
             selectTable,
+            clearResponses,
             onKeyUp,
           };
         }
 
         export default appMain;
       </script>
-      <div class="shell">
-        <header class="topbar">
-          <img class="brand-mark" src="./logo.svg" alt="d0" />
-          <span class="brand">D0</span>
-          <span class="db-name">{{ name || 'database' }}</span>
-          <span class="spacer"></span>
-          <button type="button" on-click="loadSchema()">{{ loading ? 'Loading...' : 'Refresh schema' }}</button>
+      <div class="shell h-full min-h-0 grid-rows-[auto_1fr]">
+        <header class="topbar flex items-center gap-2.5 border-b border-[#303943] px-3.5 py-2.5">
+          <img class="brand-mark h-6 w-6 rounded-[5px]" src="./logo.svg" alt="d0" />
+          <span class="brand font-bold tracking-[.08em] text-[#8bd5ca]">D0</span>
+          <span class="db-name max-w-[40vw] overflow-hidden text-ellipsis whitespace-nowrap text-[#8d99a8]">{{ name || 'database' }}</span>
+          <span class="spacer flex-1"></span>
+          <button class="rounded-md border border-[#303943] bg-[#1d232a] px-2.5 py-1.5 text-[#edf2f7] hover:border-[#8bd5ca] hover:text-[#8bd5ca]" type="button" on-click="loadSchema()">{{ loading ? 'Loading...' : 'Refresh schema' }}</button>
         </header>
-        <main class="workspace">
-          <aside class="panel schema-panel">
-            <div class="panel-header">
-              <span class="panel-title">Schema</span>
-              <span class="schema-count">{{ schemaTables.length }}</span>
+        <main class="workspace grid min-h-0 grid-cols-[245px_minmax(360px,1fr)_minmax(360px,1.15fr)] max-[1050px]:grid-cols-[210px_minmax(330px,1fr)] max-[1050px]:grid-rows-[minmax(0,1fr)_minmax(420px,auto)] max-[680px]:block max-[680px]:overflow-auto">
+          <aside class="panel schema-panel flex min-h-0 min-w-0 flex-col overflow-hidden border-r border-[#303943] max-[1050px]:row-span-1 max-[680px]:max-h-[220px] max-[680px]:border-b max-[680px]:border-r-0">
+            <div class="panel-header flex items-center gap-2 px-3 py-3">
+              <span class="panel-title text-[11px] uppercase tracking-[.1em] text-[#8d99a8]">Schema</span>
+              <span class="schema-count ml-auto text-[#8bd5ca]">{{ schemaTables.length }}</span>
             </div>
-            <div class="schema-list">
+            <div class="schema-list flex-1 overflow-auto border-t border-[#303943] p-1.5">
               <template if="!schemaTables.length">
                 <div class="hint">No tables discovered.</div>
               </template>
               <template for="table of schemaTables">
-                <button class="schema-item" type="button" on-click="selectTable(table.name)">
+                <button class="schema-item block w-full rounded-md border-0 bg-transparent p-2.5 text-left hover:bg-[#1d232a]" type="button" on-click="selectTable(table.name)">
                   {{ table.name }} <span class="schema-kind">{{ table.type }}</span>
                   <span class="schema-columns">{{ table.columns.length }} columns</span>
                 </button>
@@ -416,7 +422,7 @@
             </div>
           </aside>
 
-          <section class="panel editor-panel">
+          <section class="panel editor-panel grid min-h-0 min-w-0 grid-rows-[minmax(190px,38%)_minmax(0,1fr)] overflow-hidden border-r border-[#303943] max-[1050px]:border-r-0 max-[680px]:h-[560px] max-[680px]:border-b">
             <div class="editor">
               <div class="panel-title">Query</div>
               <code-editor
@@ -432,8 +438,11 @@
                 <button class="run" type="button" on-click="runQuery()">Run query</button>
               </div>
             </div>
-            <div class="results">
-              <div class="panel-title">Results</div>
+            <div class="results min-h-0 overflow-auto p-3">
+              <div class="flex items-center justify-between">
+                <div class="panel-title text-[11px] uppercase tracking-[.1em] text-[#8d99a8]">Results</div>
+                <button class="rounded border border-[#303943] bg-transparent px-1.5 py-0.5 text-xs text-[#8d99a8] hover:border-[#ff8f8f] hover:text-[#ff8f8f]" type="button" title="Clear results" aria-label="Clear results" on-click="clearResponses()">X</button>
+              </div>
               <template for="result of responses">
                 <code-block class="result" bind-source="result" language="json"></code-block>
               </template>
@@ -441,11 +450,11 @@
             </div>
           </section>
 
-          <section class="panel graph-panel">
-            <div class="panel-header" style="padding: 0">
-              <span class="panel-title">Relationships</span>
-              <span class="spacer"></span>
-              <button type="button" on-click="loadSchema()">Redraw</button>
+          <section class="panel graph-panel grid min-h-0 min-w-0 grid-rows-[auto_minmax(0,1fr)] gap-2.5 overflow-hidden p-3 max-[1050px]:col-span-2 max-[1050px]:border-t max-[1050px]:border-[#303943] max-[680px]:min-h-[420px]">
+            <div class="panel-header flex items-center gap-2 p-0">
+              <span class="panel-title text-[11px] uppercase tracking-[.1em] text-[#8d99a8]">Relationships</span>
+              <span class="spacer flex-1"></span>
+              <button class="rounded-md border border-[#303943] bg-[#1d232a] px-2.5 py-1.5 hover:border-[#8bd5ca] hover:text-[#8bd5ca]" type="button" on-click="loadSchema()">Redraw</button>
             </div>
             <div class="graph-wrap">
               <mermaid-graph class="h-full w-full" bind-input="diagram"></mermaid-graph>
