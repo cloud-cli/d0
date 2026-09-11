@@ -274,6 +274,7 @@
     <template component="app-main">
       <script setup>
         import { hook, onInit } from '@li3/web';
+        import db from '/index.mjs';
 
         function schemaToMermaid(schema) {
           const tables = schema.tables.filter((table) => table.type === 'table' && table.sql);
@@ -329,15 +330,10 @@
           const [loading, setLoading] = hook(false);
           const name = new URL(location.href).hostname.split('.')[0];
 
-          async function database() {
-            return import(`https://${name}.db.apphor.de/index.mjs`);
-          }
-
           async function loadSchema() {
             try {
               setError('');
               setLoading(true);
-              const db = await database();
               const value = await db.schema();
               setSchemaData(value);
               setSchemaTables(value.tables.filter((table) => !table.name.startsWith('sqlite_')));
