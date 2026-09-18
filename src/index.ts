@@ -99,6 +99,9 @@ export async function handleRequest(request: IncomingMessage, response: ServerRe
       response.writeHead(200, { 'content-type': 'image/svg+xml' }).end(logo);
       return;
 
+    case 'GET /api':
+      return onApi(request, response);
+
     case 'GET /index.mjs':
       return onEsModule(request, response);
 
@@ -111,6 +114,81 @@ export async function handleRequest(request: IncomingMessage, response: ServerRe
     default:
       response.writeHead(404).end();
   }
+}
+
+function onApi(request: IncomingMessage, response: ServerResponse) {
+  const host = request.headers['x-forwarded-host'] || request.headers.host;
+  const protocol = request.headers['x-forwarded-proto'] || 'http';
+  const document = {
+    openapi: '3.1.0',
+    info: {
+      title: 'd0 SQLite API',
+      version: '1.0.0',
+      description: 'SQLite over HTTPS with prepared statements and schema introspection.',
+    },
+    ...(host ? { servers: [{ url: `${protocol}://${host}` }] } : {}),
+    paths: {
+      '/query': {
+        post: {
+          summary: 'Execute SQL',
+          requestBody: {
+            required: true,
+            content: { 'application/json': { schema: { $ref: '#/components/schemas/QueryRequest' } } },
+          },
+          responses: {
+            '200': { description: 'SQLite result.' },
+            '400': { description: 'Invalid SQL or request.' },
+            '413': { description: 'Request body too large.' },
+            '503': { description: 'SQLite is busy.' },
+          },
+        },
+      },
+      '/schema': {
+        get: {
+          summary: 'Inspect database schema',
+          parameters: [
+            {
+              name: 'internal',
+              in: 'query',
+              required: false,
+              schema: { type: 'string', enum: ['1'] },
+              description: 'Include SQLite internal objects.',
+            },
+          ],
+          responses: { '200': { description: 'Schema metadata.' } },
+        },
+      },
+      '/index.mjs': { get: { summary: 'Get the consumer ES module', responses: { '200': { description: 'JavaScript module.' } } } },
+      '/console.html': { get: { summary: 'Get the web console', responses: { '200': { description: 'HTML console.' } } } },
+      '/logo.svg': { get: { summary: 'Get the d0 logo', responses: { '200': { description: 'SVG image.' } } } },
+    },
+    components: {
+      schemas: {
+        QueryRequest: {
+          type: 'object',
+          properties: {
+            s: { type: 'string', description: 'SQL statement.' },
+            d: { description: 'Positional or named statement bindings.' },
+            m: { type: 'string', enum: ['all', 'get', 'run', 'exec'], default: 'run' },
+            p: { type: 'array', items: { type: 'string' }, description: 'Pragmas applied before execution.' },
+            t: { type: 'array', items: { $ref: '#/components/schemas/TransactionStatement' } },
+          },
+          description: 'Use t instead of s to execute an atomic transaction.',
+        },
+        TransactionStatement: {
+          type: 'object',
+          required: ['s'],
+          properties: {
+            s: { type: 'string' },
+            d: {},
+            m: { type: 'string', enum: ['all', 'get', 'run', 'exec'], default: 'run' },
+          },
+        },
+      },
+    },
+  };
+
+  sendJson(response, 200, document);
 }
 
 async function onSchema(
