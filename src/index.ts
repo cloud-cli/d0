@@ -159,8 +159,6 @@ function onApi(request: IncomingMessage, response: ServerResponse) {
         },
       },
       '/index.mjs': { get: { summary: 'Get the consumer ES module', responses: { '200': { description: 'JavaScript module.' } } } },
-      '/console.html': { get: { summary: 'Get the web console', responses: { '200': { description: 'HTML console.' } } } },
-      '/logo.svg': { get: { summary: 'Get the d0 logo', responses: { '200': { description: 'SVG image.' } } } },
     },
     components: {
       schemas: {
