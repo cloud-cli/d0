@@ -1,5 +1,5 @@
 import { createServer, IncomingMessage, ServerResponse } from 'node:http';
-import { mkdirSync } from 'node:fs';
+import { existsSync, mkdirSync, rmSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import SQLite, { Database } from 'better-sqlite3';
 import { join } from 'node:path';
@@ -13,6 +13,7 @@ const maxDatabases = Math.max(1, Number.parseInt(process.env.MAX_DATABASES || '3
 const maxBodyBytes = Math.max(1, Number.parseInt(process.env.MAX_BODY_BYTES || '1048576', 10) || 1048576);
 const slowQueryMs = Math.max(0, Number.parseInt(process.env.SLOW_QUERY_MS || '1000', 10) || 1000);
 const databases = new Map<string, Database>();
+const cloneLocks = new Set<string>();
 
 mkdirSync(dataPath, { recursive: true });
 
@@ -111,6 +112,9 @@ export async function handleRequest(request: IncomingMessage, response: ServerRe
     case 'POST /query':
       return onQuery(request, response, db);
 
+    case 'POST /clone':
+      return onClone(request, response, db);
+
     default:
       response.writeHead(404).end();
   }
@@ -159,6 +163,21 @@ function onApi(request: IncomingMessage, response: ServerResponse) {
         },
       },
       '/index.mjs': { get: { summary: 'Get the consumer ES module', responses: { '200': { description: 'JavaScript module.' } } } },
+      '/clone': {
+        post: {
+          summary: 'Clone the selected database',
+          requestBody: {
+            required: true,
+            content: { 'application/json': { schema: { $ref: '#/components/schemas/CloneRequest' } } },
+          },
+          responses: {
+            '201': { description: 'Database cloned.' },
+            '400': { description: 'Invalid database name.' },
+            '409': { description: 'Target exists and overwrite was not confirmed.' },
+            '503': { description: 'Another clone is already running for the target.' },
+          },
+        },
+      },
     },
     components: {
       schemas: {
@@ -182,11 +201,79 @@ function onApi(request: IncomingMessage, response: ServerResponse) {
             m: { type: 'string', enum: ['all', 'get', 'run', 'exec'], default: 'run' },
           },
         },
+        CloneRequest: {
+          type: 'object',
+          required: ['name'],
+          properties: {
+            name: { type: 'string', pattern: '^[a-zA-Z0-9][a-zA-Z0-9-]*$', description: 'Name of the cloned database.' },
+            overwrite: { type: 'boolean', default: false, description: 'Replace the target if it already exists.' },
+          },
+        },
       },
     },
   };
 
   sendJson(response, 200, document);
+}
+
+async function onClone(request: IncomingMessage, response: ServerResponse, source: string) {
+  const body = await readBody(request);
+
+  if (!body) {
+    sendError(response, 413, new Error('Request body too large.'));
+    return;
+  }
+
+  try {
+    const { name: requestedName, overwrite = false } = JSON.parse(body.toString('utf-8'));
+    const name = String(requestedName || '').replace(/\.sqlite3$/i, '');
+
+    if (!/^[a-zA-Z0-9][a-zA-Z0-9-]*$/.test(name)) {
+      sendError(response, 400, new Error('Invalid database name.'));
+      return;
+    }
+
+    const target = join(dataPath, `${name}.sqlite3`);
+    const sourcePath = join(dataPath, source);
+    if (target === sourcePath) {
+      sendError(response, 400, new Error('The clone must have a different name.'));
+      return;
+    }
+
+    if (cloneLocks.has(target)) {
+      sendError(response, 503, new Error('A clone is already running for this database.'));
+      return;
+    }
+
+    const exists = existsSync(target);
+    if (exists && overwrite !== true) {
+      sendJson(response, 409, { exists: true, name, requiresOverwrite: true });
+      return;
+    }
+
+    cloneLocks.add(target);
+    try {
+      const targetDatabase = databases.get(target);
+      if (targetDatabase) {
+        targetDatabase.close();
+        databases.delete(target);
+      }
+
+      if (exists) {
+        rmSync(target, { force: true });
+        rmSync(`${target}-wal`, { force: true });
+        rmSync(`${target}-shm`, { force: true });
+      }
+
+      await getDatabase(source).backup(target);
+      sendJson(response, 201, { name, overwritten: exists });
+    } finally {
+      cloneLocks.delete(target);
+    }
+  } catch (error) {
+    DEBUG && console.error(error);
+    sendError(response, 400, error);
+  }
 }
 
 async function onSchema(

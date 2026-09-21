@@ -30,6 +30,16 @@ export async function schema({ internal = false } = {}) {
   throw new Error(await req.text());
 }
 
+export async function clone(name, overwrite = false) {
+  const req = await fetch(new URL('/clone', baseURL), {
+    method: 'POST',
+    body: JSON.stringify({ name, overwrite }),
+  });
+
+  if (req.ok) return req.json();
+  throw new Error(await req.text());
+}
+
 export async function transaction(statements, pragma = pragmas) {
   return query('transaction', undefined, undefined, pragma, statements);
 }
@@ -45,4 +55,4 @@ export function pragma(p) {
   }
 }
 
-export default { query, get, run, all, exec, transaction, schema, pragma };
+export default { query, get, run, all, exec, transaction, schema, clone, pragma };

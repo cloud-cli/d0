@@ -15,6 +15,13 @@ console.log(schema.tables, schema.statements);
 
 **GET /api** returns an OpenAPI 3.1 description of the HTTP API.
 
+**POST /clone** creates a copy of the selected database. The target name must contain only letters, numbers, and hyphens. An existing target returns `409` until overwrite is explicitly confirmed.
+
+```js
+await db.clone('test-copy');
+await db.clone('test-copy', true); // overwrite an existing copy
+```
+
 The web console uses an explicit method selector instead of guessing from SQL text. Use `all` or `get` for reads, `run` for one prepared statement, `exec` for DDL or multiple statements, and `transaction` to run the entered SQL atomically.
 
 **POST /query**
