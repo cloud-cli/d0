@@ -135,10 +135,10 @@ export async function handleRequest(
       return onDelete(response, db);
 
     case 'POST /restore':
-      return onRestore(request, response, db);
+      return onRestore(response, db);
 
     case 'POST /cleanup':
-      return onCleanup(request, response);
+      return onCleanup(response);
 
     default:
       response.writeHead(404).end();
@@ -334,14 +334,8 @@ async function onDelete(response: ServerResponse, database: string) {
   }
 }
 
-async function onRestore(request: IncomingMessage, response: ServerResponse, database: string) {
-  const body = await readBody(request);
-  if (!body) return sendError(response, 413, new Error('Request body too large.'));
-
+async function onRestore(response: ServerResponse, database: string) {
   try {
-    const { confirm } = JSON.parse(body.toString('utf-8'));
-    if (confirm !== true) return sendError(response, 400, new Error('Set confirm to true to restore a database.'));
-
     const target = join(dataPath, database);
     if (existsSync(target)) return sendError(response, 409, new Error('A live database already exists.'));
 
@@ -360,13 +354,8 @@ async function onRestore(request: IncomingMessage, response: ServerResponse, dat
   }
 }
 
-async function onCleanup(request: IncomingMessage, response: ServerResponse) {
-  const body = await readBody(request);
-  if (!body) return sendError(response, 413, new Error('Request body too large.'));
-
+async function onCleanup(response: ServerResponse) {
   try {
-    const { confirm } = JSON.parse(body.toString('utf-8'));
-    if (confirm !== true) return sendError(response, 400, new Error('Set confirm to true to run cleanup.'));
     sendJson(response, 200, { success: true, deleted: cleanupDeletedDatabases() });
   } catch (error) {
     DEBUG && console.error(error);

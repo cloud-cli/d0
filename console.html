@@ -369,6 +369,19 @@
             setResponses([]);
           }
 
+          async function cloneDatabase() {
+            const name = window.prompt('Clone this database as:');
+            if (!name) return;
+
+            try {
+              setError('');
+              const result = await db.clone(name);
+              setResponses([...responses.value, pretty(result)]);
+            } catch (e) {
+              setError(String(e));
+            }
+          }
+
           function onKeyUp(event) {
             if ((event.metaKey || event.ctrlKey) && event.key === 'Enter') {
               event.preventDefault();
@@ -394,6 +407,7 @@
             runQuery,
             selectTable,
             clearResponses,
+            cloneDatabase,
             onKeyUp,
           };
         }
@@ -406,6 +420,7 @@
           <span class="brand font-bold tracking-[.08em] text-[#8bd5ca]">D0</span>
           <span class="db-name max-w-[40vw] overflow-hidden text-ellipsis whitespace-nowrap text-[#8d99a8]">{{ name || 'database' }}</span>
           <span class="spacer flex-1"></span>
+          <button class="rounded-md border border-[#303943] bg-[#1d232a] px-2.5 py-1.5 text-[#edf2f7] hover:border-[#8bd5ca] hover:text-[#8bd5ca]" type="button" on-click="cloneDatabase()">Clone</button>
           <button class="rounded-md border border-[#303943] bg-[#1d232a] px-2.5 py-1.5 text-[#edf2f7] hover:border-[#8bd5ca] hover:text-[#8bd5ca]" type="button" on-click="loadSchema()">{{ loading ? 'Loading...' : 'Refresh schema' }}</button>
         </header>
         <main class="workspace grid min-h-0 grid-cols-[245px_minmax(360px,1fr)_minmax(360px,1.15fr)] max-[1050px]:grid-cols-[210px_minmax(330px,1fr)] max-[1050px]:grid-rows-[minmax(0,1fr)_minmax(420px,auto)] max-[680px]:block max-[680px]:overflow-auto">
