@@ -3,7 +3,6 @@ import { existsSync, mkdirSync, readdirSync, renameSync, rmSync, statSync } from
 import { readFile } from 'node:fs/promises';
 import SQLite, { Database } from 'better-sqlite3';
 import { join } from 'node:path';
-import { performance } from 'node:perf_hooks';
 
 const DEBUG = !!process.env.DEBUG;
 const methods = ['all', 'run', 'get', 'exec'];
@@ -12,7 +11,6 @@ const dataPath = process.env.DATA_PATH || join(import.meta.dirname, 'data');
 const binPath = join(dataPath, '.bin');
 const maxDatabases = Math.max(1, Number.parseInt(process.env.MAX_DATABASES || '32', 10) || 32);
 const maxBodyBytes = Math.max(1, Number.parseInt(process.env.MAX_BODY_BYTES || '1048576', 10) || 1048576);
-const slowQueryMs = Math.max(0, Number.parseInt(process.env.SLOW_QUERY_MS || '1000', 10) || 1000);
 const databases = new Map<string, Database>();
 const cloneLocks = new Set<string>();
 
@@ -54,16 +52,8 @@ export function closeDatabases() {
 
 export function serve() {
   const server = createServer((req, res) => {
-    DEBUG && console.log('incoming request', {
-      method: req.method,
-      url: req.url,
-      host: req.headers.host,
-      forwardedHost: req.headers['x-forwarded-host'],
-    });
-
     const pathDatabase = getPathDatabase(req.url);
     if (pathDatabase) {
-      DEBUG && console.log('path database resolved', pathDatabase);
       req.url = pathDatabase.url;
       return dispatchRequest(req, res, pathDatabase.file, pathDatabase.prefix);
     }
@@ -76,7 +66,6 @@ export function serve() {
         .replace(/[^a-z0-9-]+/g, '');
 
       if (subdomain) {
-        DEBUG && console.log('subdomain database resolved', subdomain);
         return dispatchRequest(req, res, subdomain + '.sqlite3');
       }
 
@@ -113,13 +102,6 @@ export async function handleRequest(
   db: string,
   databasePrefix = '',
 ) {
-  DEBUG &&
-    response.on('finish', () => {
-      console.log(
-        `[${new Date().toISOString().slice(0, 19)}] [${response.statusCode} ${String(request.headers['x-forwarded-host'] || '')}] ${request.method} ${request.url}`,
-      );
-    });
-
   const url = new URL(request.url, 'http://localhost');
   const route = `${request.method} ${url.pathname}`.trim();
 
@@ -519,9 +501,7 @@ export async function onQuery(request: IncomingMessage, response: ServerResponse
 
       const sqlite = getDatabase(db);
       applyPragmas(sqlite, p);
-      const started = performance.now();
       sqlite.transaction(() => t.map((statement) => executeStatement(sqlite, statement)))();
-      logSlowQuery(started, `transaction (${t.length} statements)`);
       sendJson(response, 200, { success: true });
       return;
     }
@@ -536,12 +516,9 @@ export async function onQuery(request: IncomingMessage, response: ServerResponse
 
     const sqlite = getDatabase(db);
     applyPragmas(sqlite, p);
-    const started = performance.now();
     const result = executeStatement(sqlite, { s, d, m });
-    logSlowQuery(started, s.trim());
 
     sendJson(response, 200, result ?? null);
-    DEBUG && console.log(s.trim(), d, result);
   } catch (error) {
     DEBUG && console.error(error);
     const status = (error as { code?: string }).code === 'SQLITE_BUSY' ? 503 : 400;
@@ -601,13 +578,6 @@ function executeStatement(sqlite: Database, statement: { s?: unknown; d?: unknow
   const runner = sqlite.prepare(sql.trim());
   const execute = (runner as unknown as Record<string, (data?: unknown) => unknown>)[method];
   return statement.d === undefined ? execute.call(runner) : execute.call(runner, statement.d);
-}
-
-function logSlowQuery(started: number, statement: string) {
-  const duration = performance.now() - started;
-  if (DEBUG && duration >= slowQueryMs) {
-    console.log(`Slow query (${Math.round(duration)}ms):`, statement);
-  }
 }
 
 async function onEsModule(request: IncomingMessage, response: ServerResponse, databasePrefix: string) {

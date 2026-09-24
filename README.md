@@ -88,7 +88,6 @@ Otherwise, it will be available at `http://localhost:PORT/` and serve a single d
 | BASE_DOMAIN    | Root domain to use in a multi-db server, e.g. `.example.com` |
 | MAX_DATABASES  | Maximum number of database connections kept open (default: `32`) |
 | MAX_BODY_BYTES | Maximum JSON request size (default: `1048576`)                  |
-| SLOW_QUERY_MS  | Log slow queries in `DEBUG` mode (default: `1000`)             |
 
 ## Development
 
