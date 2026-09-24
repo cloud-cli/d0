@@ -24,11 +24,13 @@ await db.clone('test-copy', true); // overwrite an existing copy
 
 Database maintenance is available through the HTTP API only, not the consumer ES module. Every maintenance request requires `{ "confirm": true }`:
 
-- `DELETE /database` moves the selected database and its SQLite sidecars into `DATA_PATH/.bin/`.
+- `DELETE /` moves the selected database and its SQLite sidecars into `DATA_PATH/.bin/`.
 - `POST /restore` restores the newest quarantined copy for the selected database, if no live database exists.
 - `POST /cleanup` removes quarantined copies older than seven days and returns the deleted archive names.
 
 Cleanup also runs automatically when the server starts. Use these endpoints carefully; they are intended for trusted private-cloud automation.
+
+Databases can be selected by subdomain as before, or by a path prefix for longer IDs. For example, `https://example.com/db:test/index.mjs` selects `test.sqlite3`, and `DELETE https://example.com/db:test/` quarantines it. The path prefix must be `/db:<id>` and is only interpreted at the beginning of the pathname.
 
 The web console uses an explicit method selector instead of guessing from SQL text. Use `all` or `get` for reads, `run` for one prepared statement, `exec` for DDL or multiple statements, and `transaction` to run the entered SQL atomically.
 

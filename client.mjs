@@ -1,9 +1,9 @@
-const baseURL = "https://__API_URL__";
+const baseURL = "https://__API_URL__/";
 
 let pragmas = [];
 
 async function query(method, statement, data, pragma = pragmas, transaction) {
-  const req = await fetch(new URL("/query", baseURL), {
+  const req = await fetch(new URL("query", baseURL), {
     method: "POST",
     body: JSON.stringify({
       s: statement,
@@ -22,7 +22,7 @@ async function query(method, statement, data, pragma = pragmas, transaction) {
 }
 
 export async function schema({ internal = false } = {}) {
-  const url = new URL('/schema', baseURL);
+  const url = new URL('schema', baseURL);
   if (internal) url.searchParams.set('internal', '1');
 
   const req = await fetch(url);
@@ -31,7 +31,7 @@ export async function schema({ internal = false } = {}) {
 }
 
 export async function clone(name, overwrite = false) {
-  const req = await fetch(new URL('/clone', baseURL), {
+  const req = await fetch(new URL('clone', baseURL), {
     method: 'POST',
     body: JSON.stringify({ name, overwrite }),
   });

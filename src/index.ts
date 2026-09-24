@@ -57,6 +57,12 @@ export function serve() {
 
   if (baseDomain) {
     server = createServer((req, res) => {
+      const pathDatabase = getPathDatabase(req.url);
+      if (pathDatabase) {
+        req.url = pathDatabase.url;
+        return handleRequest(req, res, pathDatabase.file, pathDatabase.prefix);
+      }
+
       const hostname = String(req.headers['x-forwarded-host'] || '');
       const subdomain = hostname
         .replace(baseDomain, '')
@@ -81,7 +87,12 @@ export function serve() {
   return server;
 }
 
-export async function handleRequest(request: IncomingMessage, response: ServerResponse, db: string) {
+export async function handleRequest(
+  request: IncomingMessage,
+  response: ServerResponse,
+  db: string,
+  databasePrefix = '',
+) {
   DEBUG &&
     response.on('finish', () => {
       console.log(
@@ -104,10 +115,10 @@ export async function handleRequest(request: IncomingMessage, response: ServerRe
       return;
 
     case 'GET /api':
-      return onApi(request, response);
+      return onApi(request, response, databasePrefix);
 
     case 'GET /index.mjs':
-      return onEsModule(request, response);
+      return onEsModule(request, response, databasePrefix);
 
     case 'GET /schema':
       return onSchema(response, db, url.searchParams.get('internal') === '1');
@@ -118,7 +129,7 @@ export async function handleRequest(request: IncomingMessage, response: ServerRe
     case 'POST /clone':
       return onClone(request, response, db);
 
-    case 'DELETE /database':
+    case 'DELETE /':
       return onDelete(request, response, db);
 
     case 'POST /restore':
@@ -132,7 +143,7 @@ export async function handleRequest(request: IncomingMessage, response: ServerRe
   }
 }
 
-function onApi(request: IncomingMessage, response: ServerResponse) {
+function onApi(request: IncomingMessage, response: ServerResponse, databasePrefix: string) {
   const host = request.headers['x-forwarded-host'] || request.headers.host;
   const protocol = request.headers['x-forwarded-proto'] || 'http';
   const document = {
@@ -142,7 +153,7 @@ function onApi(request: IncomingMessage, response: ServerResponse) {
       version: '1.0.0',
       description: 'SQLite over HTTPS with prepared statements and schema introspection.',
     },
-    ...(host ? { servers: [{ url: `${protocol}://${host}` }] } : {}),
+    ...(host ? { servers: [{ url: `${protocol}://${host}${databasePrefix}` }] } : {}),
     paths: {
       '/query': {
         post: {
@@ -226,6 +237,19 @@ function onApi(request: IncomingMessage, response: ServerResponse) {
   };
 
   sendJson(response, 200, document);
+}
+
+function getPathDatabase(requestUrl = '') {
+  const url = new URL(requestUrl, 'http://localhost');
+  const match = url.pathname.match(/^\/db:([a-zA-Z0-9][a-zA-Z0-9_-]*)(\/.*)?$/);
+  if (!match) return null;
+
+  const id = match[1];
+  return {
+    file: `${id}.sqlite3`,
+    prefix: `/db:${id}/`,
+    url: `${match[2] || '/'}${url.search}`,
+  };
 }
 
 async function onClone(request: IncomingMessage, response: ServerResponse, source: string) {
@@ -566,14 +590,15 @@ function logSlowQuery(started: number, statement: string) {
   }
 }
 
-async function onEsModule(request: IncomingMessage, response: ServerResponse) {
+async function onEsModule(request: IncomingMessage, response: ServerResponse, databasePrefix: string) {
   const hostname = String(request.headers['x-forwarded-host']);
   const code = await readFile('./client.mjs', 'utf8');
+  const apiBase = hostname + databasePrefix.replace(/\/$/, '');
 
   response
     .writeHead(200, {
       'Content-Type': 'text/javascript',
       'Access-Control-Allow-Origin': '*',
     })
-    .end(redactDataPath(code.replace('__API_URL__', hostname)));
+    .end(redactDataPath(code.replace('__API_URL__', apiBase)));
 }
