@@ -53,16 +53,22 @@ export function closeDatabases() {
 }
 
 export function serve() {
-  let server;
+  const server = createServer((req, res) => {
+    DEBUG && console.log('incoming request', {
+      method: req.method,
+      url: req.url,
+      host: req.headers.host,
+      forwardedHost: req.headers['x-forwarded-host'],
+    });
 
-  if (baseDomain) {
-    server = createServer((req, res) => {
-      const pathDatabase = getPathDatabase(req.url);
-      if (pathDatabase) {
-        req.url = pathDatabase.url;
-        return handleRequest(req, res, pathDatabase.file, pathDatabase.prefix);
-      }
+    const pathDatabase = getPathDatabase(req.url);
+    if (pathDatabase) {
+      DEBUG && console.log('path database resolved', pathDatabase);
+      req.url = pathDatabase.url;
+      return dispatchRequest(req, res, pathDatabase.file, pathDatabase.prefix);
+    }
 
+    if (baseDomain) {
       const hostname = String(req.headers['x-forwarded-host'] || '');
       const subdomain = hostname
         .replace(baseDomain, '')
@@ -70,14 +76,16 @@ export function serve() {
         .replace(/[^a-z0-9-]+/g, '');
 
       if (subdomain) {
-        return handleRequest(req, res, subdomain + '.sqlite3');
+        DEBUG && console.log('subdomain database resolved', subdomain);
+        return dispatchRequest(req, res, subdomain + '.sqlite3');
       }
 
       res.writeHead(400).end();
-    });
-  } else {
-    server = createServer((req, res) => handleRequest(req, res, 'db.sqlite3'));
-  }
+      return;
+    }
+
+    return dispatchRequest(req, res, 'db.sqlite3');
+  });
 
   server.listen(+process.env.PORT, () => {
     console.log(`Started on ${process.env.PORT}`);
@@ -85,6 +93,18 @@ export function serve() {
   server.once('close', closeDatabases);
 
   return server;
+}
+
+function dispatchRequest(
+  request: IncomingMessage,
+  response: ServerResponse,
+  db: string,
+  databasePrefix = '',
+) {
+  return handleRequest(request, response, db, databasePrefix).catch((error) => {
+    DEBUG && console.error('request failed', error);
+    if (!response.headersSent) sendError(response, 500, error);
+  });
 }
 
 export async function handleRequest(
