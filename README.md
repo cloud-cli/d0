@@ -30,7 +30,7 @@ Database maintenance is available through the HTTP API only, not the consumer ES
 
 Cleanup also runs automatically when the server starts. Use these endpoints carefully; they are intended for trusted private-cloud automation.
 
-Databases can be selected by subdomain as before, or by a path prefix for longer IDs. For example, `https://example.com/db:test/index.mjs` selects `test.sqlite3`, and `DELETE https://example.com/db:test/` quarantines it. The path prefix must be `/db:<id>` and is only interpreted at the beginning of the pathname.
+Databases can be selected by subdomain as before, or by a path prefix for longer IDs. For example, `https://example.com/db~test/index.mjs` selects `test.sqlite3`, and `DELETE https://example.com/db~test/` quarantines it. The path prefix must be `/db~<id>` and is only interpreted at the beginning of the pathname.
 
 The web console uses an explicit method selector instead of guessing from SQL text. Use `all` or `get` for reads, `run` for one prepared statement, `exec` for DDL or multiple statements, and `transaction` to run the entered SQL atomically.
 

@@ -243,13 +243,13 @@ function onApi(request: IncomingMessage, response: ServerResponse, databasePrefi
 
 function getPathDatabase(requestUrl = '') {
   const url = new URL(requestUrl, 'http://localhost');
-  const match = url.pathname.match(/^\/db:([a-zA-Z0-9][a-zA-Z0-9_-]*)(\/.*)?$/);
+  const match = url.pathname.match(/^\/db~([a-zA-Z0-9][a-zA-Z0-9_-]*)(\/.*)?$/);
   if (!match) return null;
 
   const id = match[1];
   return {
     file: `${id}.sqlite3`,
-    prefix: `/db:${id}/`,
+    prefix: `/db~${id}/`,
     url: `${match[2] || '/'}${url.search}`,
   };
 }
