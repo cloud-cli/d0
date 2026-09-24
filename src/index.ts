@@ -132,7 +132,7 @@ export async function handleRequest(
       return onClone(request, response, db);
 
     case 'DELETE /':
-      return onDelete(request, response, db);
+      return onDelete(response, db);
 
     case 'POST /restore':
       return onRestore(request, response, db);
@@ -314,14 +314,8 @@ async function onClone(request: IncomingMessage, response: ServerResponse, sourc
   }
 }
 
-async function onDelete(request: IncomingMessage, response: ServerResponse, database: string) {
-  const body = await readBody(request);
-  if (!body) return sendError(response, 413, new Error('Request body too large.'));
-
+async function onDelete(response: ServerResponse, database: string) {
   try {
-    const { confirm } = JSON.parse(body.toString('utf-8'));
-    if (confirm !== true) return sendError(response, 400, new Error('Set confirm to true to quarantine a database.'));
-
     const source = join(dataPath, database);
     if (!existsSync(source)) return sendError(response, 404, new Error('Database does not exist.'));
 

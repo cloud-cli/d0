@@ -22,7 +22,7 @@ await db.clone('test-copy');
 await db.clone('test-copy', true); // overwrite an existing copy
 ```
 
-Database maintenance is available through the HTTP API only, not the consumer ES module. Every maintenance request requires `{ "confirm": true }`:
+Database maintenance is available through the HTTP API only, not the consumer ES module. Restore and cleanup require `{ "confirm": true }`:
 
 - `DELETE /` moves the selected database and its SQLite sidecars into `DATA_PATH/.bin/`.
 - `POST /restore` restores the newest quarantined copy for the selected database, if no live database exists.
