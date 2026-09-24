@@ -1,5 +1,5 @@
 import { createServer, IncomingMessage, ServerResponse } from 'node:http';
-import { existsSync, mkdirSync, rmSync } from 'node:fs';
+import { existsSync, mkdirSync, readdirSync, renameSync, rmSync, statSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import SQLite, { Database } from 'better-sqlite3';
 import { join } from 'node:path';
@@ -9,6 +9,7 @@ const DEBUG = !!process.env.DEBUG;
 const methods = ['all', 'run', 'get', 'exec'];
 const baseDomain = process.env.BASE_DOMAIN;
 const dataPath = process.env.DATA_PATH || join(import.meta.dirname, 'data');
+const binPath = join(dataPath, '.bin');
 const maxDatabases = Math.max(1, Number.parseInt(process.env.MAX_DATABASES || '32', 10) || 32);
 const maxBodyBytes = Math.max(1, Number.parseInt(process.env.MAX_BODY_BYTES || '1048576', 10) || 1048576);
 const slowQueryMs = Math.max(0, Number.parseInt(process.env.SLOW_QUERY_MS || '1000', 10) || 1000);
@@ -16,6 +17,8 @@ const databases = new Map<string, Database>();
 const cloneLocks = new Set<string>();
 
 mkdirSync(dataPath, { recursive: true });
+mkdirSync(binPath, { recursive: true });
+cleanupDeletedDatabases();
 
 export function getDatabase(file: string): Database {
   const fullPath = join(dataPath, file);
@@ -114,6 +117,15 @@ export async function handleRequest(request: IncomingMessage, response: ServerRe
 
     case 'POST /clone':
       return onClone(request, response, db);
+
+    case 'DELETE /database':
+      return onDelete(request, response, db);
+
+    case 'POST /restore':
+      return onRestore(request, response, db);
+
+    case 'POST /cleanup':
+      return onCleanup(request, response);
 
     default:
       response.writeHead(404).end();
@@ -274,6 +286,102 @@ async function onClone(request: IncomingMessage, response: ServerResponse, sourc
     DEBUG && console.error(error);
     sendError(response, 400, error);
   }
+}
+
+async function onDelete(request: IncomingMessage, response: ServerResponse, database: string) {
+  const body = await readBody(request);
+  if (!body) return sendError(response, 413, new Error('Request body too large.'));
+
+  try {
+    const { confirm } = JSON.parse(body.toString('utf-8'));
+    if (confirm !== true) return sendError(response, 400, new Error('Set confirm to true to quarantine a database.'));
+
+    const source = join(dataPath, database);
+    if (!existsSync(source)) return sendError(response, 404, new Error('Database does not exist.'));
+
+    closeCachedDatabase(source);
+    const archive = join(binPath, `${database}.${Date.now()}`);
+    mkdirSync(archive, { recursive: true });
+    for (const suffix of ['', '-wal', '-shm']) {
+      const file = `${source}${suffix}`;
+      if (existsSync(file)) renameSync(file, join(archive, `${database}${suffix}`));
+    }
+
+    sendJson(response, 200, { success: true, name: database });
+  } catch (error) {
+    DEBUG && console.error(error);
+    sendError(response, 400, error);
+  }
+}
+
+async function onRestore(request: IncomingMessage, response: ServerResponse, database: string) {
+  const body = await readBody(request);
+  if (!body) return sendError(response, 413, new Error('Request body too large.'));
+
+  try {
+    const { confirm } = JSON.parse(body.toString('utf-8'));
+    if (confirm !== true) return sendError(response, 400, new Error('Set confirm to true to restore a database.'));
+
+    const target = join(dataPath, database);
+    if (existsSync(target)) return sendError(response, 409, new Error('A live database already exists.'));
+
+    const archive = latestArchive(database);
+    if (!archive) return sendError(response, 404, new Error('No database archive exists.'));
+
+    for (const suffix of ['', '-wal', '-shm']) {
+      const file = join(archive, `${database}${suffix}`);
+      if (existsSync(file)) renameSync(file, `${target}${suffix}`);
+    }
+    rmSync(archive, { recursive: true, force: true });
+    sendJson(response, 200, { success: true, name: database });
+  } catch (error) {
+    DEBUG && console.error(error);
+    sendError(response, 400, error);
+  }
+}
+
+async function onCleanup(request: IncomingMessage, response: ServerResponse) {
+  const body = await readBody(request);
+  if (!body) return sendError(response, 413, new Error('Request body too large.'));
+
+  try {
+    const { confirm } = JSON.parse(body.toString('utf-8'));
+    if (confirm !== true) return sendError(response, 400, new Error('Set confirm to true to run cleanup.'));
+    sendJson(response, 200, { success: true, deleted: cleanupDeletedDatabases() });
+  } catch (error) {
+    DEBUG && console.error(error);
+    sendError(response, 400, error);
+  }
+}
+
+function closeCachedDatabase(file: string) {
+  const database = databases.get(file);
+  if (database) {
+    database.close();
+    databases.delete(file);
+  }
+}
+
+function latestArchive(database: string) {
+  return readdirSync(binPath, { withFileTypes: true })
+    .filter((entry) => entry.isDirectory() && entry.name.startsWith(`${database}.`))
+    .map((entry) => join(binPath, entry.name))
+    .sort((a, b) => statSync(b).mtimeMs - statSync(a).mtimeMs)[0];
+}
+
+function cleanupDeletedDatabases() {
+  const cutoff = Date.now() - 7 * 24 * 60 * 60 * 1000;
+  const deleted: string[] = [];
+
+  for (const entry of readdirSync(binPath, { withFileTypes: true })) {
+    const archive = join(binPath, entry.name);
+    if (entry.isDirectory() && statSync(archive).mtimeMs < cutoff) {
+      rmSync(archive, { recursive: true, force: true });
+      deleted.push(entry.name);
+    }
+  }
+
+  return deleted;
 }
 
 async function onSchema(
